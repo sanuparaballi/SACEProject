@@ -6,6 +6,7 @@ Created on Tue Jun 10 11:46:29 2025
 @author: sanup
 """
 
+
 # sace_project/src/utils/data_logger.py
 
 import csv
@@ -17,30 +18,23 @@ import numpy as np
 class DataLogger:
     """
     Handles logging of experimental results to a CSV file in a structured format.
+    Updated to handle batch runs from a single configuration file.
     """
 
-    def __init__(self, experiment_name, config):
+    def __init__(self, experiment_name):
         """
         Initializes the logger and creates the output directory and file.
 
-        The filename will include a timestamp to ensure that results from
-        different experiments do not overwrite each other.
-
         Args:
-            experiment_name (str): The name of the experiment, used for the filename.
-            config (dict): The full configuration dictionary for the experiment.
+            experiment_name (str): The base name for the experiment, used for the filename.
         """
-        # Create the 'results/csv' directory if it doesn't already exist.
         output_dir = os.path.join("results", "csv")
         os.makedirs(output_dir, exist_ok=True)
 
-        # Generate a unique filename using a timestamp.
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         self.filepath = os.path.join(output_dir, f"{experiment_name}_{timestamp}.csv")
 
-        self.config = config
-
-        # Define the headers for our CSV file. This standardizes the output.
+        # Define the headers for our CSV file. This standardizes the output for all experiments.
         self.fieldnames = [
             "run_id",
             "problem_name",
@@ -67,26 +61,39 @@ class DataLogger:
 
         Args:
             run_id (int): The identifier of the independent run (e.g., 1 to 30).
-            results (dict): A dictionary containing the final results of the run,
-                            matching the structure from BaseOptimizer.solve().
+            results (dict): A dictionary containing the final results of the run.
+                            It must include 'problem_name' and 'algorithm_name'.
         """
-        # Prepare the row dictionary with data from the experiment run.
-        # We convert numpy arrays to strings for clean CSV storage.
         ul_solution = results.get("best_ul_solution", np.array([]))
         ll_solution = results.get("corresponding_ll_solution", np.array([]))
 
+        # Get problem/algo names directly from the results dict passed by main.py
+        problem_name = results.get("problem_name", "N/A")
+        algorithm_name = results.get("algorithm_name", "N/A")
+
         row = {
             "run_id": run_id,
-            "problem_name": self.config["problem"]["name"],
-            "algorithm_name": self.config["algorithm"]["name"],
-            "final_ul_fitness": f"{results.get('final_ul_fitness'):.6e}",  # Scientific notation for precision
+            "problem_name": problem_name,
+            "algorithm_name": algorithm_name,
+            "final_ul_fitness": (
+                f"{results.get('final_ul_fitness', 'ERROR'):.6e}"
+                if isinstance(results.get("final_ul_fitness"), (int, float))
+                else str(results.get("final_ul_fitness"))
+            ),
             "total_ul_nfe": results.get("total_ul_nfe"),
             "total_ll_nfe": results.get("total_ll_nfe"),
-            "best_ul_solution": np.array2string(ul_solution, separator=","),
-            "corresponding_ll_solution": np.array2string(ll_solution, separator=","),
+            "best_ul_solution": (
+                np.array2string(ul_solution, separator=",")
+                if isinstance(ul_solution, np.ndarray)
+                else ul_solution
+            ),
+            "corresponding_ll_solution": (
+                np.array2string(ll_solution, separator=",")
+                if isinstance(ll_solution, np.ndarray)
+                else ll_solution
+            ),
         }
 
-        # Append the new row to the existing CSV file.
         try:
             with open(self.filepath, "a", newline="") as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
