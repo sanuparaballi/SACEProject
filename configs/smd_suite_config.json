@@ -1,0 +1,33 @@
+{
+  "experiment_name": "Experiment1_SMD_Suite_Comparison",
+  "settings": {
+    "independent_runs": 30,
+    "seed": 2025
+  },
+  "problems": [
+    { "name": "SMD1", "params": {} },
+    { "name": "SMD2", "params": {} },
+    { "name": "SMD3", "params": {} },
+    { "name": "SMD4", "params": {} },
+    { "name": "SMD5", "params": {} },
+    { "name": "SMD6", "params": {} }
+  ],
+  "algorithms": [
+    {
+      "name": "SACE_ES",
+      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 100, "initial_samples": 20, "ll_generations": 20 }
+    },
+    {
+      "name": "NestedDE",
+      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 100, "ll_generations": 50, "F": 0.5, "Cr": 0.9 }
+    },
+    {
+      "name": "BiGA",
+      "params": { "ul_pop_size": 50, "ll_pop_size": 50, "generations": 100, "ll_refinement_gens": 5 }
+    },
+    {
+      "name": "KKTSolver",
+      "params": { "max_iter": 1000 }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+    "experiment_name": "SACE-ES_on_SP1_20D",
+    "problem": {
+        "name": "SP1",
+        "params": {
+            "n_dim": 20
+        }
+    },
+    "algorithm": {
+        "name": "SACE_ES",
+        "params": {
+            "ul_pop_size": 100,
+            "ll_pop_size": 50,
+            "generations": 200,
+            "initial_samples": 40,
+            "ll_generations": 30
+        }
+    },
+    "settings": {
+        "independent_runs": 30,
+        "seed": 2024
+    }
+}

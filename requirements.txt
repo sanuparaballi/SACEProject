@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jun 10 11:42:05 2025
+
+@author: sanup
+"""
+
+
+
+#sace_project/requirements.txt
+
+
+#Core numerical and data handling libraries
+numpy
+scipy
+
+#Surrogate modeling (Gaussian Processes)
+scikit-learn
+
+#A highly-recommended utility for displaying clean, informative progress bars
+tqdm
+
+#Data analysis and manipulation library, for reading and processing CSV results
+pandas
+
+#Plotting library for creating graphs and figures for the paper
+matplotlib
