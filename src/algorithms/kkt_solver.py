@@ -11,8 +11,6 @@ Created on Tue Jun 10 12:42:36 2025
 import numpy as np
 from scipy.optimize import minimize
 from .base_optimizer import BaseOptimizer
-
-# For testing, we'll need a problem definition. We'll assume it's updated with gradients.
 from ..problems.smd_suite import get_smd_problem
 
 
@@ -38,9 +36,6 @@ class KKTSolver(BaseOptimizer):
         """
         Sets up and solves the MPEC.
         """
-        # The variables for the single-level problem are a concatenation of
-        # upper-level vars (x), lower-level vars (y), and Lagrange multipliers (lambda).
-        # We start from a random initial guess.
         initial_x = np.random.uniform(
             self.problem.ul_bounds[0], self.problem.ul_bounds[1], self.problem.ul_dim
         )
@@ -48,64 +43,61 @@ class KKTSolver(BaseOptimizer):
             self.problem.ll_bounds[0], self.problem.ll_bounds[1], self.problem.ll_dim
         )
 
-        # Check if the problem's lower level is constrained
         has_ll_constraints = (
-            hasattr(self.problem, "evaluate_ll_constraints") and self.problem.num_ll_constraints > 0
+            hasattr(self.problem, "num_ll_constraints") and self.problem.num_ll_constraints > 0
         )
 
         if has_ll_constraints:
-            # Case with lower-level constraints
             num_lambda = self.problem.num_ll_constraints
             initial_lambda = np.random.rand(num_lambda)
             initial_guess = np.concatenate([initial_x, initial_y, initial_lambda])
         else:
-            # Case without lower-level constraints (KKT conditions simplify)
             num_lambda = 0
             initial_guess = np.concatenate([initial_x, initial_y])
 
         # Define bounds for all variables (x, y, and lambda >= 0)
-        bounds = [(self.problem.ul_bounds[0], self.problem.ul_bounds[1])] * self.problem.ul_dim + [
-            (self.problem.ll_bounds[0], self.problem.ll_bounds[1])
-        ] * self.problem.ll_dim
-        if has_ll_constraints:
-            bounds += [(0, None)] * num_lambda  # Lagrange multipliers must be non-negative
+        bounds = []
+        bounds.extend([(self.problem.ul_bounds[0], self.problem.ul_bounds[1])] * self.problem.ul_dim)
+        bounds.extend([(self.problem.ll_bounds[0], self.problem.ll_bounds[1])] * self.problem.ll_dim)
 
-        # Define the objective function for the NLP solver (which is the UL objective)
+        if has_ll_constraints:
+            bounds.extend([(0, None)] * num_lambda)
+
         def objective(z):
             x = z[: self.problem.ul_dim]
             y = z[self.problem.ul_dim : self.problem.ul_dim + self.problem.ll_dim]
-            self.ul_nfe += 1  # Count each objective call as an evaluation
+            self.ul_nfe += 1
             return self.problem.evaluate(x, y)[0]
 
-        # Define the KKT conditions as equality and inequality constraints
         constraints = []
 
-        # 1. Stationarity condition: grad_y(L) = 0
         def stationarity_constraint(z):
             x = z[: self.problem.ul_dim]
             y = z[self.problem.ul_dim : self.problem.ul_dim + self.problem.ll_dim]
-            grad_f = self.problem.evaluate_ll_gradient(x, y)  # Requires new problem method
-            self.ll_nfe += 1  # Count each gradient call as an evaluation
+            grad_f = self.problem.evaluate_ll_gradient(x, y)
+            self.ll_nfe += 1
 
             if has_ll_constraints:
                 lmbda = z[self.problem.ul_dim + self.problem.ll_dim :]
-                grad_g = self.problem.evaluate_ll_constraint_gradient(x, y)  # Requires new method
-                return grad_f + np.dot(lmbda, grad_g)
+                grad_g = self.problem.evaluate_ll_constraint_gradient(x, y)
+                # Flatten the result of the dot product to ensure robust shape addition.
+                # This fixes the "Invalid index to scalar variable" error for 1D problems.
+                return grad_f + np.dot(lmbda, grad_g).flatten()
             else:
-                return grad_f  # Simplified for unconstrained LL
+                return grad_f
 
         constraints.append({"type": "eq", "fun": stationarity_constraint})
 
         if has_ll_constraints:
-            # 2. Primal feasibility: g(x, y) <= 0
+
             def primal_feasibility(z):
                 x = z[: self.problem.ul_dim]
                 y = z[self.problem.ul_dim : self.problem.ul_dim + self.problem.ll_dim]
-                return -self.problem.evaluate_ll_constraints(x, y)  # SLSQP expects g(x) >= 0
+                # SLSQP expects constraints in the form g(x) >= 0 for 'ineq'
+                return -self.problem.evaluate_ll_constraints(x, y)
 
             constraints.append({"type": "ineq", "fun": primal_feasibility})
 
-            # 3. Complementary slackness: lambda * g(x, y) = 0
             def complementary_slackness(z):
                 x = z[: self.problem.ul_dim]
                 y = z[self.problem.ul_dim : self.problem.ul_dim + self.problem.ll_dim]
@@ -115,7 +107,6 @@ class KKTSolver(BaseOptimizer):
 
             constraints.append({"type": "eq", "fun": complementary_slackness})
 
-        # Solve the reformulated problem
         result = minimize(
             objective,
             initial_guess,
@@ -125,13 +116,11 @@ class KKTSolver(BaseOptimizer):
             options={"maxiter": self.max_iter, "disp": False},
         )
 
-        # Extract results
         if result.success:
             final_x = result.x[: self.problem.ul_dim]
             final_y = result.x[self.problem.ul_dim : self.problem.ul_dim + self.problem.ll_dim]
             final_fitness = result.fun
         else:
-            # If solver fails, return poor results
             final_x, final_y, final_fitness = initial_x, initial_y, np.inf
 
         final_results = {

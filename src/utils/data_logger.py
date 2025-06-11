@@ -18,7 +18,7 @@ import numpy as np
 class DataLogger:
     """
     Handles logging of experimental results to a CSV file in a structured format.
-    Updated to handle batch runs from a single configuration file.
+    Updated to handle batch runs and detailed error messages.
     """
 
     def __init__(self, experiment_name):
@@ -48,7 +48,7 @@ class DataLogger:
 
         # Write the header row to the newly created CSV file.
         try:
-            with open(self.filepath, "w", newline="") as csvfile:
+            with open(self.filepath, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
                 writer.writeheader()
         except IOError as e:
@@ -58,16 +58,10 @@ class DataLogger:
     def log_run(self, run_id, results):
         """
         Logs the final results of a single independent run to the CSV file.
-
-        Args:
-            run_id (int): The identifier of the independent run (e.g., 1 to 30).
-            results (dict): A dictionary containing the final results of the run.
-                            It must include 'problem_name' and 'algorithm_name'.
         """
         ul_solution = results.get("best_ul_solution", np.array([]))
         ll_solution = results.get("corresponding_ll_solution", np.array([]))
 
-        # Get problem/algo names directly from the results dict passed by main.py
         problem_name = results.get("problem_name", "N/A")
         algorithm_name = results.get("algorithm_name", "N/A")
 
@@ -95,7 +89,7 @@ class DataLogger:
         }
 
         try:
-            with open(self.filepath, "a", newline="") as csvfile:
+            with open(self.filepath, "a", newline="", encoding="utf-8") as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
                 writer.writerow(row)
         except IOError as e:

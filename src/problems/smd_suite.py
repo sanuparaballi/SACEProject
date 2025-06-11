@@ -35,7 +35,10 @@ class BilevelProblem:
     # --- Methods for KKT Solver ---
     def evaluate_ll_gradient(self, ul_vars, ll_vars):
         """Evaluates the gradient of the lower-level objective w.r.t. ll_vars."""
-        raise NotImplementedError(f"LL gradient not implemented for {self.__class__.__name__}")
+        # UPDATED: More descriptive error message for clarity in logs.
+        raise NotImplementedError(
+            f"KKT Inapplicable: LL gradient not implemented for {self.__class__.__name__} (likely non-differentiable)."
+        )
 
     def evaluate_ll_constraints(self, ul_vars, ll_vars):
         """Evaluates the lower-level inequality constraints. Expected g(x,y) <= 0."""
@@ -43,7 +46,9 @@ class BilevelProblem:
 
     def evaluate_ll_constraint_gradient(self, ul_vars, ll_vars):
         """Evaluates the gradient of the LL constraints w.r.t. ll_vars."""
-        raise NotImplementedError(f"LL constraint gradient not implemented for {self.__class__.__name__}")
+        raise NotImplementedError(
+            f"KKT Inapplicable: LL constraint gradient not implemented for {self.__class__.__name__}"
+        )
 
     def __repr__(self):
         return f"{self.__class__.__name__}(UL_dim={self.ul_dim}, LL_dim={self.ll_dim})"
