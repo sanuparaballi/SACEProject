@@ -17,121 +17,93 @@ import argparse
 from glob import glob
 
 
-def analyze_results(results_dir):
+def analyze_results(results_dir, reference_algo="SACE_ES"):
     """
     Analyzes all result CSVs in a directory, calculates statistics,
-    and performs significance testing.
+    and performs significance testing against a reference algorithm.
 
     Args:
         results_dir (str): Path to the directory containing result CSV files.
+        reference_algo (str): The name of the algorithm to use as a baseline for statistical tests.
     """
     # Find all result CSV files in the specified directory
     csv_files = glob(os.path.join(results_dir, "*.csv"))
+
+    csv_files = "./../results/csv/Experiment1_SMD_Suite_Comparison_20250610-162826.csv"
 
     if not csv_files:
         print(f"No CSV files found in '{results_dir}'.")
         return
 
-    # Group files by problem
-    results_by_problem = {}
-    for f in csv_files:
-        try:
-            # We need to read the file to find out the problem name
-            df_temp = pd.read_csv(f, nrows=1)
-            problem_name = df_temp["problem_name"].iloc[0]
+    all_data = pd.read_csv(csv_files)
+    # Combine all data from all found CSVs into a single DataFrame
+    # all_data = pd.concat([pd.read_csv(f) for f in csv_files], ignore_index=True)
 
-            if problem_name not in results_by_problem:
-                results_by_problem[problem_name] = []
+    # Handle potential 'ERROR' strings in fitness column by converting to NaN
+    all_data["final_ul_fitness"] = pd.to_numeric(all_data["final_ul_fitness"], errors="coerce")
 
-            # Store the full dataframe for later processing
-            results_by_problem[problem_name].append(pd.read_csv(f))
-        except (pd.errors.EmptyDataError, IndexError):
-            print(f"Warning: Skipping empty or invalid file: {f}")
-            continue
-
-    # Process each problem separately
-    for problem, dfs in results_by_problem.items():
+    # Group by problem to analyze each one separately
+    for problem, problem_df in all_data.groupby("problem_name"):
         print(f"\n--- Analysis for Problem: {problem} ---")
 
-        all_data = pd.concat(dfs, ignore_index=True)
-
-        # Calculate mean and std dev for each algorithm
-        summary = all_data.groupby("algorithm_name")["final_ul_fitness"].agg(["mean", "std"]).reset_index()
+        # Calculate mean and std dev for each algorithm on this problem
+        summary = (
+            problem_df.groupby("algorithm_name")["final_ul_fitness"]
+            .agg(["mean", "std", "count"])
+            .reset_index()
+        )
 
         print("\n** Performance Summary **")
         print(summary.to_string(index=False))
 
-        # Statistical comparison against SACE-ES (if present)
+        # Statistical comparison against the reference algorithm
         algorithms = summary["algorithm_name"].unique()
-        if "SACE_ES" in algorithms and len(algorithms) > 1:
-            print("\n** Wilcoxon Rank-Sum Test (vs. SACE_ES) **")
+        if reference_algo in algorithms and len(algorithms) > 1:
+            print(f"\n** Wilcoxon Rank-Sum Test (vs. {reference_algo}) **")
             print("p < 0.05 indicates a statistically significant difference.")
 
-            sace_es_results = all_data[all_data["algorithm_name"] == "SACE_ES"]["final_ul_fitness"]
+            ref_results = problem_df[problem_df["algorithm_name"] == reference_algo][
+                "final_ul_fitness"
+            ].dropna()
 
             for algo in algorithms:
-                if algo == "SACE_ES":
+                if algo == reference_algo:
                     continue
 
-                competitor_results = all_data[all_data["algorithm_name"] == algo]["final_ul_fitness"]
+                competitor_results = problem_df[problem_df["algorithm_name"] == algo][
+                    "final_ul_fitness"
+                ].dropna()
 
-                # Check if we have enough data to compare
-                if len(sace_es_results) != len(competitor_results):
-                    print(f"  - Cannot compare with {algo}: unequal number of runs.")
+                if len(ref_results) != len(competitor_results):
+                    print(f"  - Cannot compare with {algo}: unequal number of successful runs.")
+                    continue
+                if len(ref_results) < 2:
+                    print(f"  - Cannot compare with {algo}: not enough data points.")
                     continue
 
                 try:
-                    stat, p_value = wilcoxon(sace_es_results, competitor_results)
-                    print(f"  - SACE_ES vs. {algo}: p-value = {p_value:.4f}")
+                    stat, p_value = wilcoxon(ref_results, competitor_results)
+                    print(f"  - {reference_algo} vs. {algo}: p-value = {p_value:.4f}")
                 except ValueError as e:
                     print(f"  - Could not perform Wilcoxon test for {algo}: {e}")
 
     print("\n--- Analysis Complete ---")
 
 
-# =============================================================================
-# Test Module
-# =============================================================================
 if __name__ == "__main__":
-    print("--- Verifying run_statistics.py ---")
+    parser = argparse.ArgumentParser(description="Run statistical analysis on experiment results.")
+    parser.add_argument(
+        "--results_dir",
+        type=str,
+        default=os.path.join("results", "csv"),
+        help="Directory containing the CSV result files to analyze.",
+    )
+    parser.add_argument(
+        "--ref_algo",
+        type=str,
+        default="SACE_ES",
+        help="The reference algorithm for statistical comparisons.",
+    )
+    args = parser.parse_args()
 
-    # Create a dummy results directory and some CSV files
-    dummy_dir = os.path.join("results", "csv")
-    os.makedirs(dummy_dir, exist_ok=True)
-
-    print(f"\nCreating dummy result files in '{dummy_dir}'...")
-
-    # Data for SACE-ES (superior performance)
-    sace_data = {
-        "run_id": range(1, 31),
-        "problem_name": ["SMD1_Test"] * 30,
-        "algorithm_name": ["SACE_ES"] * 30,
-        "final_ul_fitness": np.random.normal(loc=1.5, scale=0.1, size=30),
-    }
-    pd.DataFrame(sace_data).to_csv(os.path.join(dummy_dir, "sace_results.csv"), index=False)
-
-    # Data for NestedDE (inferior performance)
-    de_data = {
-        "run_id": range(1, 31),
-        "problem_name": ["SMD1_Test"] * 30,
-        "algorithm_name": ["NestedDE"] * 30,
-        "final_ul_fitness": np.random.normal(loc=2.5, scale=0.3, size=30),
-    }
-    pd.DataFrame(de_data).to_csv(os.path.join(dummy_dir, "de_results.csv"), index=False)
-
-    print("Dummy files created.")
-
-    # Run the analysis function on the dummy directory
-    try:
-        analyze_results(dummy_dir)
-    except Exception as e:
-        print(f"An error occurred during analysis: {e}")
-    finally:
-        # Clean up the dummy files and directory
-        print("\nCleaning up dummy files...")
-        for f in glob(os.path.join(dummy_dir, "*.csv")):
-            os.remove(f)
-        os.rmdir(dummy_dir)
-        print("Cleanup complete.")
-
-    print("\n--- Verification Complete ---")
+    analyze_results(args.results_dir, args.ref_algo)

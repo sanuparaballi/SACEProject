@@ -1,7 +1,7 @@
 {
   "experiment_name": "Experiment1_SMD_Suite_Comparison",
   "settings": {
-    "independent_runs": 30,
+    "independent_runs": 15,
     "seed": 2025
   },
   "problems": [
@@ -15,15 +15,15 @@
   "algorithms": [
     {
       "name": "SACE_ES",
-      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 100, "initial_samples": 20, "ll_generations": 20 }
+      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 50, "initial_samples": 20, "ll_generations": 20 }
     },
     {
       "name": "NestedDE",
-      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 100, "ll_generations": 50, "F": 0.5, "Cr": 0.9 }
+      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 50, "ll_generations": 25, "F": 0.5, "Cr": 0.9 }
     },
     {
       "name": "BiGA",
-      "params": { "ul_pop_size": 50, "ll_pop_size": 50, "generations": 100, "ll_refinement_gens": 5 }
+      "params": { "ul_pop_size": 50, "ll_pop_size": 50, "generations": 50, "ll_refinement_gens": 5 }
     },
     {
       "name": "KKTSolver",
