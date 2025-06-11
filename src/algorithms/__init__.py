@@ -42,7 +42,8 @@ def get_algorithm(name: str, problem, config: dict) -> BaseOptimizer:
     # We use lowercase names for case-insensitive matching.
     algorithm_map = {
         "nestedde": NestedDE,
-        "biga": BiGA,
+        "biga_lazy": BiGA,
+        "biga_aggressive": BiGA,
         "sace_es": SACE_ES,
         "kktsolver": KKTSolver,
     }

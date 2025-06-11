@@ -1,5 +1,5 @@
 {
-  "experiment_name": "Experiment1_SMD_Suite_Comparison",
+  "experiment_name": "Experiment1_SMD_Suite_Comparison_v2",
   "settings": {
     "independent_runs": 5,
     "seed": 2025
@@ -19,11 +19,15 @@
     },
     {
       "name": "NestedDE",
-      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 50, "ll_generations": 20, "F": 0.5, "Cr": 0.9 }
+      "params": { "ul_pop_size": 50, "ll_pop_size": 30, "generations": 50, "ll_generations": 50, "F": 0.5, "Cr": 0.9 }
     },
     {
-      "name": "BiGA",
-      "params": { "ul_pop_size": 50, "ll_pop_size": 50, "generations": 50, "ll_refinement_gens": 10 }
+      "name": "BiGA_Lazy",
+      "params": { "ul_pop_size": 50, "ll_pop_size": 50, "generations": 50, "ll_refinement_gens": 5 }
+    },
+    {
+      "name": "BiGA_Aggressive",
+      "params": { "ul_pop_size": 50, "ll_pop_size": 50, "generations": 50, "ll_refinement_gens": 1 }
     },
     {
       "name": "KKTSolver",

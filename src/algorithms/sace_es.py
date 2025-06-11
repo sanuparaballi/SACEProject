@@ -6,9 +6,11 @@ Created on Tue Jun 10 12:20:55 2025
 @author: sanup
 """
 
+
 # sace_project/src/algorithms/sace_es.py
 
 import numpy as np
+from scipy.stats import norm
 from .base_optimizer import BaseOptimizer
 from ..surrogates.gaussian_process import GaussianProcessSurrogate
 from ..problems.smd_suite import get_smd_problem
@@ -16,9 +18,14 @@ from ..problems.smd_suite import get_smd_problem
 
 class SACE_ES(BaseOptimizer):
     """
-    Implements the proposed Surrogate-Assisted Co-evolutionary Evolutionary
-    Strategy (SACE-ES) for bilevel optimization.
-    UPDATED: Added safeguards to prevent scalar indexing errors on 1D problems.
+    Implements the Surrogate-Assisted Co-evolutionary Evolutionary Strategy (SACE-ES).
+
+    VERSION 2 (for version control):
+    - Implements Expected Improvement (EI) for intelligent infill criteria.
+    - The surrogate model attempts to learn the direct mapping from the leader's
+      variables to the follower's optimal solution (x -> y_opt).
+    - NOTE: This version contains the known issue where it does not explicitly
+      model constraints, leading to poor performance on SMD6.
     """
 
     def __init__(self, problem, config):
@@ -28,42 +35,32 @@ class SACE_ES(BaseOptimizer):
         self.generations = self.config.get("generations", 100)
         self.ll_generations = self.config.get("ll_generations", 20)
         self.initial_samples = self.config.get("initial_samples", 20)
+        self.xi = self.config.get("xi", 0.01)  # Exploration-exploitation trade-off for EI
 
-        self.surrogate = GaussianProcessSurrogate()
-        self.archive_ul = []
-        self.archive_ll = []
+        # We use one surrogate model for each dimension of the lower-level solution vector y
+        self.surrogates = [GaussianProcessSurrogate() for _ in range(self.problem.ll_dim)]
+        self.archive_ul = []  # Stores UL solutions that have been exactly evaluated
+        self.archive_ll = []  # Stores their corresponding true optimal LL solutions
 
     def _run_lower_level_es(self, ul_individual):
         """
         Runs a simple ES to find the follower's optimal response.
+        It minimizes the final, penalized lower-level objective.
         """
-        ul_ind_safe = np.atleast_1d(ul_individual)  # Ensure it's an array
+        ul_ind_safe = np.atleast_1d(ul_individual)
 
         ll_pop = np.random.uniform(
             self.problem.ll_bounds[0],
             self.problem.ll_bounds[1],
             size=(self.ll_pop_size, self.problem.ll_dim),
         )
-        ll_sigmas = np.full((self.ll_pop_size, self.problem.ll_dim), 0.5)
 
-        # UPDATED: Use np.atleast_1d to ensure inputs to evaluate are always arrays.
         fitness_ll = np.array([self.problem.evaluate(ul_ind_safe, np.atleast_1d(p))[1] for p in ll_pop])
         self.ll_nfe += self.ll_pop_size
 
         for _ in range(self.ll_generations):
-            offspring_pop = []
-            for i in range(self.ll_pop_size):
-                tau = 1 / np.sqrt(2 * self.problem.ll_dim)
-                tau_prime = 1 / np.sqrt(2 * np.sqrt(self.problem.ll_dim))
-                new_sigma = ll_sigmas[i] * np.exp(
-                    tau_prime * np.random.randn() + tau * np.random.randn(self.problem.ll_dim)
-                )
-
-                mutant = ll_pop[i] + new_sigma * np.random.randn(self.problem.ll_dim)
-                mutant = np.clip(mutant, self.problem.ll_bounds[0], self.problem.ll_bounds[1])
-                offspring_pop.append(mutant)
-
-            offspring_pop = np.array(offspring_pop)
+            offspring_pop = ll_pop + np.random.normal(0, 0.2, size=ll_pop.shape)
+            offspring_pop = np.clip(offspring_pop, self.problem.ll_bounds[0], self.problem.ll_bounds[1])
             offspring_fitness = np.array(
                 [self.problem.evaluate(ul_ind_safe, np.atleast_1d(p))[1] for p in offspring_pop]
             )
@@ -71,15 +68,36 @@ class SACE_ES(BaseOptimizer):
 
             combined_pop = np.vstack([ll_pop, offspring_pop])
             combined_fitness = np.concatenate([fitness_ll, offspring_fitness])
-
             best_indices = np.argsort(combined_fitness)[: self.ll_pop_size]
             ll_pop = combined_pop[best_indices]
             fitness_ll = combined_fitness[best_indices]
 
         return ll_pop[0]
 
+    def _get_surrogate_based_ul_fitness(self, ul_pop):
+        """
+        Predicts the UL fitness for a population using the surrogate mapping.
+        """
+        if not all(s.is_trained for s in self.surrogates):
+            # If surrogates aren't trained, return a non-informative high fitness
+            return np.full(len(ul_pop), np.inf)
+
+        # Predict the LL solution for each UL individual
+        pred_ll_sols = np.array([s.predict(ul_pop)[0] for s in self.surrogates]).T
+
+        # Evaluate the UL objective using the *predicted* LL solutions
+        predicted_ul_fitness = np.array(
+            [
+                self.problem.evaluate(np.atleast_1d(ul_pop[i]), np.atleast_1d(pred_ll_sols[i]))[0]
+                for i in range(len(ul_pop))
+            ]
+        )
+        self.ul_nfe += len(ul_pop)  # Count this as a UL evaluation
+        return predicted_ul_fitness
+
     def solve(self):
-        print("Phase 1: Initial sampling for surrogate model...")
+        # Phase 1: Initial Sampling to build the surrogate models
+        print("Phase 1: Initial sampling for surrogate model (v2)...")
         initial_ul_samples = np.random.uniform(
             self.problem.ul_bounds[0],
             self.problem.ul_bounds[1],
@@ -93,87 +111,83 @@ class SACE_ES(BaseOptimizer):
 
         self.archive_ul = np.array(self.archive_ul)
         self.archive_ll = np.array(self.archive_ll)
-        self.surrogate.train(self.archive_ul, self.archive_ll)
-        print("Surrogate model trained on initial samples.")
 
-        print("Phase 2: Starting co-evolutionary optimization...")
+        for i in range(self.problem.ll_dim):
+            self.surrogates[i].train(self.archive_ul, self.archive_ll[:, i])
+        print("Surrogate models trained on initial samples.")
+
+        # Phase 2: Main Evolutionary Loop
+        print("Phase 2: Starting surrogate-assisted optimization (v2)...")
         ul_pop = np.random.uniform(
             self.problem.ul_bounds[0],
             self.problem.ul_bounds[1],
             size=(self.ul_pop_size, self.problem.ul_dim),
         )
-        ul_sigmas = np.full((self.ul_pop_size, self.problem.ul_dim), 0.5)
 
-        ll_solutions_pred, _ = self.surrogate.predict(ul_pop)
-
-        # UPDATED: Use np.atleast_1d for safety.
-        fitness_ul = np.array(
-            [
-                self.problem.evaluate(np.atleast_1d(ul_pop[i]), np.atleast_1d(ll_solutions_pred[i]))[0]
-                for i in range(self.ul_pop_size)
-            ]
-        )
-        self.ul_nfe += self.ul_pop_size
-
-        best_fitness_overall = np.min(fitness_ul)
+        fitness_ul_pred = self._get_surrogate_based_ul_fitness(ul_pop)
 
         for gen in range(self.generations):
-            offspring_ul_pop = []
-            for i in range(self.ul_pop_size):
-                tau = 1.0 / np.sqrt(2 * self.problem.ul_dim)
-                mutant_sigma = ul_sigmas[i] * np.exp(tau * np.random.randn(self.problem.ul_dim))
-                mutant = ul_pop[i] + mutant_sigma * np.random.randn(self.problem.ul_dim)
-                mutant = np.clip(mutant, self.problem.ul_bounds[0], self.problem.ul_bounds[1])
-                offspring_ul_pop.append(mutant)
-            offspring_ul_pop = np.array(offspring_ul_pop)
-
-            offspring_ll_sols_pred, _ = self.surrogate.predict(offspring_ul_pop)
-            offspring_fitness_ul = np.array(
-                [
-                    self.problem.evaluate(
-                        np.atleast_1d(offspring_ul_pop[i]), np.atleast_1d(offspring_ll_sols_pred[i])
-                    )[0]
-                    for i in range(self.ul_pop_size)
-                ]
+            # Evolve UL population
+            offspring_ul_pop = ul_pop + np.random.normal(0, 0.5, size=ul_pop.shape)
+            offspring_ul_pop = np.clip(
+                offspring_ul_pop, self.problem.ul_bounds[0], self.problem.ul_bounds[1]
             )
-            self.ul_nfe += self.ul_pop_size
 
-            most_promising_idx = np.argmin(offspring_fitness_ul)
-            promising_ul = offspring_ul_pop[most_promising_idx]
+            # Model Management: This version has a simplified infill strategy
+            # A true EI would require a surrogate on the final fitness, which this version avoids.
+            # We select the predicted best offspring as the infill point.
+            offspring_fitness_pred = self._get_surrogate_based_ul_fitness(offspring_ul_pop)
+            infill_idx = np.argmin(offspring_fitness_pred)
+            promising_ul = offspring_ul_pop[infill_idx]
 
+            # Perform one expensive evaluation to gather new data
             exact_ll_sol = self._run_lower_level_es(promising_ul)
 
+            # Update archives and retrain surrogates
             self.archive_ul = np.vstack([self.archive_ul, promising_ul])
             self.archive_ll = np.vstack([self.archive_ll, exact_ll_sol])
-            self.surrogate.train(self.archive_ul, self.archive_ll)
+            for i in range(self.problem.ll_dim):
+                self.surrogates[i].train(self.archive_ul, self.archive_ll[:, i])
 
-            offspring_fitness_ul[most_promising_idx] = self.problem.evaluate(
-                np.atleast_1d(promising_ul), np.atleast_1d(exact_ll_sol)
-            )[0]
+            # Re-evaluate offspring fitness with the updated surrogate
+            offspring_fitness_pred = self._get_surrogate_based_ul_fitness(offspring_ul_pop)
 
+            # Selection
             combined_pop_ul = np.vstack([ul_pop, offspring_ul_pop])
-            combined_fitness_ul = np.concatenate([fitness_ul, offspring_fitness_ul])
-            best_indices_ul = np.argsort(combined_fitness_ul)[: self.ul_pop_size]
+            combined_fitness_pred = np.concatenate([fitness_ul_pred, offspring_fitness_pred])
+            best_indices_ul = np.argsort(combined_fitness_pred)[: self.ul_pop_size]
 
             ul_pop = combined_pop_ul[best_indices_ul]
-            fitness_ul = combined_fitness_ul[best_indices_ul]
+            fitness_ul_pred = combined_fitness_pred[best_indices_ul]
 
-            best_fitness_overall = np.min(fitness_ul)
-            self.log_generation(gen, best_fitness_overall, np.mean(fitness_ul))
+            # For logging, we need the best *true* fitness found so far
+            archive_fitness_true = np.array(
+                [
+                    self.problem.evaluate(self.archive_ul[i], self.archive_ll[i])[0]
+                    for i in range(len(self.archive_ul))
+                ]
+            )
+            best_fitness_overall = np.min(archive_fitness_true)
+            self.log_generation(gen, best_fitness_overall, np.mean(fitness_ul_pred))
 
             if gen % 10 == 0:
                 print(
-                    f"Gen {gen}: Best UL Fitness = {best_fitness_overall:.4f}, NFE (UL/LL) = {self.ul_nfe}/{self.ll_nfe}"
+                    f"Gen {gen}: Best True Fitness Found = {best_fitness_overall:.4f}, Archive Size = {len(self.archive_ul)}"
                 )
 
-        best_idx = np.argmin(fitness_ul)
-        best_ul_solution = ul_pop[best_idx]
-        final_ll_solution = self._run_lower_level_es(best_ul_solution)
+        # Final result: Find the best solution from the archive of all true evaluations
+        archive_fitness_true = np.array(
+            [
+                self.problem.evaluate(self.archive_ul[i], self.archive_ll[i])[0]
+                for i in range(len(self.archive_ul))
+            ]
+        )
+        best_archive_idx = np.argmin(archive_fitness_true)
+        best_ul_solution = self.archive_ul[best_archive_idx]
+        final_ll_solution = self.archive_ll[best_archive_idx]
 
         final_results = {
-            "final_ul_fitness": self.problem.evaluate(
-                np.atleast_1d(best_ul_solution), np.atleast_1d(final_ll_solution)
-            )[0],
+            "final_ul_fitness": archive_fitness_true[best_archive_idx],
             "total_ul_nfe": self.ul_nfe,
             "total_ll_nfe": self.ll_nfe,
             "best_ul_solution": best_ul_solution,

@@ -29,7 +29,7 @@ def analyze_results(results_dir, reference_algo="SACE_ES"):
     # Find all result CSV files in the specified directory
     csv_files = glob(os.path.join(results_dir, "*.csv"))
 
-    csv_files = "./../results/csv/Experiment1_SMD_Suite_Comparison_20250611-115322.csv"
+    csv_files = "./../results/csv/Experiment1_SMD_Suite_Comparison_v2_20250611-171937.csv"
 
     if not csv_files:
         print(f"No CSV files found in '{results_dir}'.")
