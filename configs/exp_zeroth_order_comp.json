@@ -1,0 +1,37 @@
+{
+  "experiment_name": "ZerothOrder_SACE_vs_VRZSBO_Comp",
+  "settings": {
+    "independent_runs": 5,
+    "seed": 2026
+  },
+  "problems": [
+    { 
+      "name": "Hyper_Representation", 
+      "params": {
+        "n": 200, 
+        "m": 8 
+      } 
+    }
+  ],
+  "algorithms": [
+    {
+      "name": "SACE_ES",
+      "params": { 
+        "ul_pop_size": 100, 
+        "ll_pop_size": 50, 
+        "generations": 50, 
+        "initial_samples": 50, 
+        "ll_generations": 20 
+      }
+    },
+    {
+      "name": "NestedDE",
+      "params": { 
+        "ul_pop_size": 100, 
+        "ll_pop_size": 50, 
+        "generations": 50, 
+        "ll_generations": 20
+      }
+    }
+  ]
+}

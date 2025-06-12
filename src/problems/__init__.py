@@ -6,12 +6,14 @@ Created on Tue Jun 10 12:30:32 2025
 @author: sanup
 """
 
+
 # sace_project/src/problems/__init__.py
 
 # Import the specific factory functions from each suite file
 from .smd_suite import get_smd_problem, SMD1
 from .synthetic_suite import get_synthetic_problem, SP1
 from .multimodal_suite import get_multimodal_problem, VC1
+from .hyper_suite import get_hyper_problem, HyperRepresentation  # UPDATED: Import the new suite
 
 
 def get_problem(name: str, params: dict):
@@ -38,11 +40,13 @@ def get_problem(name: str, params: dict):
     if name_lower.startswith("smd"):
         return get_smd_problem(name_lower)
     elif name_lower.startswith("sp"):
-        # Pass the dimension parameter to the synthetic factory
-        n_dim = params.get("n_dim", 10)  # Default to 10 dimensions if not specified
+        n_dim = params.get("n_dim", 10)
         return get_synthetic_problem(name_lower, n_dim=n_dim)
     elif name_lower.startswith("vc"):
         return get_multimodal_problem(name_lower)
+    # UPDATED: Add logic to handle the new Hyper-representation problem
+    elif name_lower.startswith("hyper"):
+        return get_hyper_problem(name_lower, params)
     else:
         # If the problem does not match any known prefix, raise an error.
         raise ValueError(f"Problem '{name}' not recognized or suite not supported.")
@@ -59,6 +63,7 @@ if __name__ == "__main__":
         {"name": "SMD1", "params": {}},
         {"name": "SP1", "params": {"n_dim": 20}},
         {"name": "VC1", "params": {}},
+        {"name": "Hyper_Representation", "params": {"n": 100, "m": 10}},  # New test case
     ]
 
     for i, case in enumerate(test_cases):
@@ -75,6 +80,8 @@ if __name__ == "__main__":
                 assert problem.n_dim == 20, "Dimension not set correctly."
             elif case["name"] == "VC1":
                 assert isinstance(problem, VC1), "Incorrect problem type."
+            elif case["name"] == "Hyper_Representation":
+                assert isinstance(problem, HyperRepresentation), "Incorrect problem type."
 
             print("  Assertion PASSED: Correct type and parameters.")
 
@@ -82,7 +89,7 @@ if __name__ == "__main__":
             print(f"  An error occurred during {case['name']} test: {e}")
 
     # Test for an unknown problem
-    print("\n[Test Case 4] Testing for an unknown problem...")
+    print("\n[Test Case 5] Testing for an unknown problem...")
     try:
         get_problem(name="UnknownProblem", params={})
     except ValueError as e:

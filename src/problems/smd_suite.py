@@ -15,10 +15,7 @@ import numpy as np
 class BilevelProblem:
     """
     Base class for a bilevel optimization problem.
-
-    This class provides a template for defining problems, ensuring they all have
-    a consistent structure including dimensions, bounds, and evaluation methods.
-    It now includes abstract methods for gradients and constraints for KKT compatibility.
+    UPDATED: The evaluate method now accepts the 'add_penalty' flag.
     """
 
     def __init__(self, ul_dim, ll_dim, ul_bounds, ll_bounds):
@@ -26,26 +23,24 @@ class BilevelProblem:
         self.ll_dim = ll_dim
         self.ul_bounds = np.array(ul_bounds)
         self.ll_bounds = np.array(ll_bounds)
-        # Default number of LL constraints to 0
         self.num_ll_constraints = 0
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
+        """
+        The 'add_penalty' flag is included for compatibility but may not be used
+        by unconstrained problems.
+        """
         raise NotImplementedError("The evaluate method must be implemented by a subclass.")
 
-    # --- Methods for KKT Solver ---
     def evaluate_ll_gradient(self, ul_vars, ll_vars):
-        """Evaluates the gradient of the lower-level objective w.r.t. ll_vars."""
-        # UPDATED: More descriptive error message for clarity in logs.
         raise NotImplementedError(
             f"KKT Inapplicable: LL gradient not implemented for {self.__class__.__name__} (likely non-differentiable)."
         )
 
     def evaluate_ll_constraints(self, ul_vars, ll_vars):
-        """Evaluates the lower-level inequality constraints. Expected g(x,y) <= 0."""
-        return np.array([])  # No constraints by default
+        return np.array([])
 
     def evaluate_ll_constraint_gradient(self, ul_vars, ll_vars):
-        """Evaluates the gradient of the LL constraints w.r.t. ll_vars."""
         raise NotImplementedError(
             f"KKT Inapplicable: LL constraint gradient not implemented for {self.__class__.__name__}"
         )
@@ -55,12 +50,10 @@ class BilevelProblem:
 
 
 class SMD1(BilevelProblem):
-    """Implements the SMD1 test problem, now with gradient information."""
-
     def __init__(self):
         super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x1, x2 = ul_vars[0], ul_vars[1]
         y1, y2 = ll_vars[0], ll_vars[1]
         ul_objective = (x1 - 1) ** 2 + (x2 - 1) ** 2 + (y1 - 1) ** 2
@@ -69,21 +62,12 @@ class SMD1(BilevelProblem):
         ll_objective = term1_ll**2 + term2_ll**2
         return ul_objective, ll_objective
 
-    def evaluate_ll_gradient(self, ul_vars, ll_vars):
-        x1, x2 = ul_vars[0], ul_vars[1]
-        y1, y2 = ll_vars[0], ll_vars[1]
-        df_dy1 = 2 * (y1 - (x1**2 - x2))
-        df_dy2 = 2 * (y2 - (-x1 + x2**2))
-        return np.array([df_dy1, df_dy2])
-
 
 class SMD2(BilevelProblem):
-    """Implements the SMD2 test problem. LL involves non-differentiable terms for KKT."""
-
     def __init__(self):
         super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x1, x2 = ul_vars[0], ul_vars[1]
         y1, y2 = ll_vars[0], ll_vars[1]
         ul_objective = (x1 - 1) ** 2 + (y1 - 1) ** 2
@@ -93,13 +77,11 @@ class SMD2(BilevelProblem):
         return ul_objective, ll_objective
 
 
-# For SMD3, SMD4, SMD5, the gradients are complex or the functions non-smooth,
-# so we will explicitly not implement them to show KKT failure.
 class SMD3(BilevelProblem):
     def __init__(self):
         super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x1, x2, y1, y2 = *ul_vars, *ll_vars
         p, r = 2.0, 0.1
         ul_objective = (x1 - 1) ** 2 + (x2 - 1) ** 2 + (y1 - 1) ** 2
@@ -115,7 +97,7 @@ class SMD4(BilevelProblem):
     def __init__(self):
         super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x1, x2, y1, y2 = *ul_vars, *ll_vars
         ul_objective = (x1 - 1) ** 2 + (x2 - 1) ** 2 + (y1 - 1) ** 2 + np.exp((y2 - 1) ** 2)
         ll_objective = -np.exp(-((y1 - x1**2) ** 2 + (y2 - x2**2) ** 2)) + 0.01 * (
@@ -128,7 +110,7 @@ class SMD5(BilevelProblem):
     def __init__(self):
         super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x1, x2, y1, y2 = *ul_vars, *ll_vars
         ul_objective = (x1 - 1) ** 2 + (x2 - 1) ** 2 + (y1 - 1) ** 2 + (y2 - 1) ** 2
         ll_objective = ((y1 - x1) ** 2 + (y2 - x2) ** 2) * ((y1 - x1**2) ** 2 + (y2 - x2**2) ** 2 + 1e-4)
@@ -136,11 +118,9 @@ class SMD5(BilevelProblem):
 
 
 class SMD6(BilevelProblem):
-    """Implements the SMD6 test problem with constraints and gradients."""
-
     def __init__(self):
         super().__init__(ul_dim=1, ll_dim=1, ul_bounds=(1, 10), ll_bounds=(1, 10))
-        self.num_ll_constraints = 1  # This problem has one LL constraint
+        self.num_ll_constraints = 1
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x, y = ul_vars[0], ll_vars[0]
@@ -159,20 +139,25 @@ class SMD6(BilevelProblem):
 
     def evaluate_ll_gradient(self, ul_vars, ll_vars):
         x, y = ul_vars[0], ll_vars[0]
-        # Gradient of LL objective f w.r.t y
         df_dy = 2 * (y - (1 + 0.1 * x**2))
         return np.array([df_dy])
 
     def evaluate_ll_constraints(self, ul_vars, ll_vars):
         x, y = ul_vars[0], ll_vars[0]
-        # c(x,y) = (x-5)^2 + y^2 - 25 <= 0
         return np.array([(x - 5) ** 2 + y**2 - 25])
 
     def evaluate_ll_constraint_gradient(self, ul_vars, ll_vars):
         x, y = ul_vars[0], ll_vars[0]
-        # Gradient of LL constraint c w.r.t y
         dc_dy = 2 * y
-        return np.array([[dc_dy]])  # Shape must be (n_constraints, n_ll_vars)
+        return np.array([[dc_dy]])
+
+
+# def get_smd_problem(name: str):
+#     problem_map = { "smd1": SMD1, "smd2": SMD2, "smd3": SMD3,
+#                     "smd4": SMD4, "smd5": SMD5, "smd6": SMD6, }
+#     problem_class = problem_map.get(name.lower())
+#     if problem_class: return problem_class()
+#     raise ValueError(f"Problem '{name}' not found in SMD suite.")
 
 
 def get_smd_problem(name: str):

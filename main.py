@@ -123,5 +123,5 @@ def main(config_path):
 if __name__ == "__main__":
     # --- For running in an IDE like Spyder ---
     # You can now point this to a single "batch" config file.
-    config_file_path = "configs/exp1_smd_suite_batch.json"
+    config_file_path = "configs/exp_zeroth_order_comp.json"
     main(config_file_path)
