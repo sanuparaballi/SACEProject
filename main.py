@@ -15,7 +15,7 @@ import time
 import numpy as np
 from tqdm import tqdm
 import os
-import traceback  # Import the traceback module for detailed error reporting
+import traceback
 
 from src.problems import get_problem
 from src.algorithms import get_algorithm
@@ -26,7 +26,6 @@ def main(config_path):
     """
     Main function to run a batch of bilevel optimization experiments.
     """
-    # 1. Load Configuration
     print(f"--- Loading batch configuration from: {config_path} ---")
     try:
         with open(config_path, "r", encoding="utf-8-sig") as f:
@@ -40,15 +39,9 @@ def main(config_path):
     problems_to_run = config.get("problems", [])
     algorithms_to_run = config.get("algorithms", [])
 
-    if not problems_to_run or not algorithms_to_run:
-        print("FATAL ERROR: The config file must contain 'problems' and 'algorithms' lists.")
-        return
-
-    # 2. Initialize a single logger for the entire batch
     logger = DataLogger(exp_name)
     print(f"Results for this entire batch will be saved to: {logger.filepath}")
 
-    # 3. Main Experiment Loop for all combinations
     total_combinations = len(problems_to_run) * len(algorithms_to_run)
     print(f"\nStarting batch execution for {total_combinations} combinations.")
 
@@ -58,51 +51,45 @@ def main(config_path):
             combination_counter += 1
             current_combination_name = f"{algorithm_config['name']} on {problem_config['name']}"
 
-            # Add prominent headers for better console tracking
             print("\n" + "=" * 80)
             print(
                 f"STARTING COMBINATION {combination_counter}/{total_combinations}: {current_combination_name}"
             )
             print("=" * 80)
 
-            # --- Per-combination setup ---
             num_runs = settings.get("independent_runs", 30)
             base_seed = settings.get("seed", int(time.time()))
 
-            # Use a more stable tqdm progress bar for the inner loop
             for i in tqdm(range(num_runs), desc=f"  Runs for {current_combination_name}", leave=False):
                 run_id = i + 1
-
-                # Use the modulo operator to keep the seed within the valid 32-bit range.
-                # The hash() of a string can be a large negative number, so we take abs().
                 unbounded_seed = base_seed + run_id + abs(hash(current_combination_name))
                 current_seed = unbounded_seed % (2**32)
                 np.random.seed(current_seed)
 
                 try:
-                    # Instantiate Problem and Algorithm for the current combination
                     problem = get_problem(problem_config["name"], problem_config.get("params", {}))
+
+                    # UPDATED: Pass experiment_name to the factory function
                     algorithm = get_algorithm(
-                        algorithm_config["name"], problem, algorithm_config.get("params", {})
+                        name=algorithm_config["name"],
+                        problem=problem,
+                        config=algorithm_config.get("params", {}),
                     )
 
-                    # Run the optimization
                     final_results = algorithm.solve()
 
-                    # Add problem and algorithm names for the logger
+                    # Commit history log after a successful run
+                    algorithm._commit_history(run_id)
+
                     final_results["problem_name"] = problem_config["name"]
                     final_results["algorithm_name"] = algorithm_config["name"]
-
-                    # Log the results
                     logger.log_run(run_id, final_results)
 
                 except Exception as e:
-                    # Use traceback to print the full, detailed error stack
                     print(f"\n--- ERROR during run {run_id} of {current_combination_name} ---")
                     error_str = traceback.format_exc()
-                    print(error_str)  # Print full error to console
+                    print(error_str)
 
-                    # Log the specific error and continue
                     error_results = {
                         "final_ul_fitness": "ERROR",
                         "total_ul_nfe": "ERROR",
@@ -123,5 +110,6 @@ def main(config_path):
 if __name__ == "__main__":
     # --- For running in an IDE like Spyder ---
     # You can now point this to a single "batch" config file.
-    config_file_path = "configs/exp_zeroth_order_comp.json"
+    # config_file_path = "configs/exp_zeroth_order_comp.json"
+    config_file_path = "configs/exp1_smd_suite_batch.json"
     main(config_file_path)

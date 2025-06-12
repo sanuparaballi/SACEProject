@@ -6,10 +6,13 @@ Created on Tue Jun 10 11:44:24 2025
 @author: sanup
 """
 
+
 # sace_project/src/algorithms/base_optimizer.py
 
 from abc import ABC, abstractmethod
-import numpy as np
+
+# Import the new history logger
+from ..utils.history_logger import HistoryLogger
 
 
 class BaseOptimizer(ABC):
@@ -19,6 +22,8 @@ class BaseOptimizer(ABC):
     This class defines the common interface that all implemented algorithms must follow.
     This ensures that the main experiment runner can interact with any algorithm
     in a standardized way.
+
+    UPDATED: Now includes a history logger for convergence analysis.
     """
 
     def __init__(self, problem, config):
@@ -31,6 +36,8 @@ class BaseOptimizer(ABC):
                      ll_bounds, and an evaluate() method.
             config (dict): A dictionary containing algorithm-specific parameters
                            extracted from the main JSON config file.
+
+        UPDATED: Added experiment_name for the logger.
         """
         self.problem = problem
         self.config = config
@@ -39,6 +46,12 @@ class BaseOptimizer(ABC):
         # Common NFE counters
         self.ul_nfe = 0
         self.ll_nfe = 0
+
+        # Initialize the history logger for this specific run
+        self.history_logger = HistoryLogger(
+            problem_name=problem.__class__.__name__,  # Use class name for consistency
+            algorithm_name=self.__class__.__name__,
+        )
 
     @abstractmethod
     def solve(self):
@@ -71,6 +84,8 @@ class BaseOptimizer(ABC):
             gen_num (int): The current generation number.
             best_fitness (float): The best fitness value in the current population.
             avg_fitness (float): The average fitness of the current population.
+
+        Stores the state of a generation in memory.
         """
         log_entry = {
             "generation": gen_num,
@@ -80,3 +95,9 @@ class BaseOptimizer(ABC):
             "cumulative_ll_nfe": self.ll_nfe,
         }
         self.history.append(log_entry)
+
+    def _commit_history(self, run_id):
+        """
+        Writes the entire accumulated history for a run to the CSV file.
+        """
+        self.history_logger.log_generation_batch(run_id, self.history)
