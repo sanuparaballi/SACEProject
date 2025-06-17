@@ -62,6 +62,23 @@ class SMD1(BilevelProblem):
         ll_objective = term1_ll**2 + term2_ll**2
         return ul_objective, ll_objective
 
+    # UPDATED: Restored the gradient calculation for SMD1
+    def evaluate_ll_gradient(self, ul_vars, ll_vars):
+        """
+        Calculates the gradient of the lower-level objective w.r.t y.
+        f(y) = (y1 - A)^2 + (y2 - B)^2
+        grad_y = [2*(y1-A), 2*(y2-B)]
+        """
+        x1, x2 = ul_vars[0], ul_vars[1]
+        y1, y2 = ll_vars[0], ll_vars[1]
+
+        A = x1**2 - x2
+        B = -x1 + x2**2
+
+        df_dy1 = 2 * (y1 - A)
+        df_dy2 = 2 * (y2 - B)
+        return np.array([df_dy1, df_dy2])
+
 
 class SMD2(BilevelProblem):
     def __init__(self):
