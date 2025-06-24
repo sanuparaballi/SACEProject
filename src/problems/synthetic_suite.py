@@ -37,7 +37,7 @@ class SP1(BilevelProblem):
         super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds)
         self.n_dim = n_dim
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         """
         Computes objective values for SP1.
 
@@ -83,7 +83,7 @@ class SP2(BilevelProblem):
         self.item_weights = np.random.rand(n_dim) * 5
         self.knapsack_capacity = n_dim * 2
 
-    def evaluate(self, ul_vars, ll_vars):
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         """
         Computes objective values for SP2.
 

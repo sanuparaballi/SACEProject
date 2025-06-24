@@ -169,12 +169,58 @@ class SMD6(BilevelProblem):
         return np.array([[dc_dy]])
 
 
-# def get_smd_problem(name: str):
-#     problem_map = { "smd1": SMD1, "smd2": SMD2, "smd3": SMD3,
-#                     "smd4": SMD4, "smd5": SMD5, "smd6": SMD6, }
-#     problem_class = problem_map.get(name.lower())
-#     if problem_class: return problem_class()
-#     raise ValueError(f"Problem '{name}' not found in SMD suite.")
+# NEWLY ADDED PROBLEMS
+class SMD7(BilevelProblem):
+    """Interdependent constraints at both levels."""
+
+    def __init__(self):
+        super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
+        self.num_ll_constraints = 2
+
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
+        x1, x2, y1, y2 = *ul_vars, *ll_vars
+        ul_objective = (x1 - 1) ** 2 + (x2 - 1) ** 2 + (y1 - 1) ** 2 + (y2 - 1) ** 2
+        ll_objective = (y1 - x1) ** 2 + (y2 - x2) ** 2
+        if add_penalty:
+            C1 = 2 * x1 - y1 - y2
+            C2 = 2 * x2 - y1 - y2
+            c1 = (y1 - x1) ** 2 + (y2 - x2) ** 2 - 1
+            c2 = y1 + y2 - 2
+            if C1 < 0:
+                ul_objective += 1e6 * abs(C1)
+            if C2 < 0:
+                ul_objective += 1e6 * abs(C2)
+            if c1 > 0:
+                ll_objective += 1e6 * c1
+            if c2 > 0:
+                ll_objective += 1e6 * c2
+        return ul_objective, ll_objective
+
+    def evaluate_ll_constraints(self, ul_vars, ll_vars):
+        x1, x2, y1, y2 = *ul_vars, *ll_vars
+        return np.array([(y1 - x1) ** 2 + (y2 - x2) ** 2 - 1, y1 + y2 - 2])
+
+
+class SMD8(BilevelProblem):
+    """Vanishing feasible region at the lower level."""
+
+    def __init__(self):
+        super().__init__(ul_dim=2, ll_dim=2, ul_bounds=(-5, 10), ll_bounds=(-5, 10))
+        self.num_ll_constraints = 1
+
+    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
+        x1, x2, y1, y2 = *ul_vars, *ll_vars
+        ul_objective = x1**2 + x2**2 + y1**2 + y2**2 + (y1 - y2) ** 2
+        ll_objective = (y1 - 1) ** 2 + (y2 - 1) ** 2
+        if add_penalty:
+            c1 = (y1 - x1) ** 2 + (y2 - x2) ** 2 - np.cos(x1 + x2) - 1
+            if c1 > 0:
+                ll_objective += 1e6 * c1
+        return ul_objective, ll_objective
+
+    def evaluate_ll_constraints(self, ul_vars, ll_vars):
+        x1, x2, y1, y2 = *ul_vars, *ll_vars
+        return np.array([(y1 - x1) ** 2 + (y2 - x2) ** 2 - np.cos(x1 + x2) - 1])
 
 
 def get_smd_problem(name: str):
@@ -185,6 +231,8 @@ def get_smd_problem(name: str):
         "smd4": SMD4,
         "smd5": SMD5,
         "smd6": SMD6,
+        "smd7": SMD7,
+        "smd8": SMD8,
     }
     problem_class = problem_map.get(name.lower())
     if problem_class:

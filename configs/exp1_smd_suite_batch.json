@@ -1,7 +1,7 @@
 {
   "experiment_name": "Experiment1_SMD_Suite_Comparison_Final",
   "settings": {
-    "independent_runs": 25,
+    "independent_runs": 1,
     "seed": 2025
   },
   "problems": [
@@ -10,7 +10,14 @@
     { "name": "SMD3", "params": {} },
     { "name": "SMD4", "params": {} },
     { "name": "SMD5", "params": {} },
-    { "name": "SMD6", "params": {} }
+    { "name": "SMD6", "params": {} },
+    { "name": "SMD7", "params": {} },
+    { "name": "SMD8", "params": {} },
+    { "name": "SP1", "params": { "n_dim": 10 } },
+    { "name": "SP1", "params": { "n_dim": 30 } },
+    { "name": "SP2", "params": { "n_dim": 10 } },
+    { "name": "SA1", "params": {} },
+    { "name": "Hyper_Representation", "params": { "n": 200, "m": 8 } }
   ],
   "algorithms": [
     {

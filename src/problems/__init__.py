@@ -12,7 +12,7 @@ Created on Tue Jun 10 12:30:32 2025
 # Import the specific factory functions from each suite file
 from .smd_suite import get_smd_problem, SMD1
 from .synthetic_suite import get_synthetic_problem, SP1
-from .multimodal_suite import get_multimodal_problem, VC1
+from .multimodal_suite import get_multimodal_problem, SA1
 from .hyper_suite import get_hyper_problem, HyperRepresentation  # UPDATED: Import the new suite
 
 
@@ -24,7 +24,7 @@ def get_problem(name: str, params: dict):
     suite-specific factory function based on the problem name.
 
     Args:
-        name (str): The name of the problem (e.g., "SMD1", "SP1", "VC1").
+        name (str): The name of the problem (e.g., "SMD1", "SP1", "SA1").
         params (dict): A dictionary of parameters for the problem, such as
                        'n_dim' for scalable problems.
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 assert isinstance(problem, SP1), "Incorrect problem type."
                 assert problem.n_dim == 20, "Dimension not set correctly."
             elif case["name"] == "VC1":
-                assert isinstance(problem, VC1), "Incorrect problem type."
+                assert isinstance(problem, SA1), "Incorrect problem type."
             elif case["name"] == "Hyper_Representation":
                 assert isinstance(problem, HyperRepresentation), "Incorrect problem type."
 
