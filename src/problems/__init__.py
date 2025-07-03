@@ -42,7 +42,7 @@ def get_problem(name: str, params: dict):
     elif name_lower.startswith("sp"):
         n_dim = params.get("n_dim", 10)
         return get_synthetic_problem(name_lower, n_dim=n_dim)
-    elif name_lower.startswith("vc"):
+    elif name_lower.startswith("sa"):
         return get_multimodal_problem(name_lower)
     # UPDATED: Add logic to handle the new Hyper-representation problem
     elif name_lower.startswith("hyper"):

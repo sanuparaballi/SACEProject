@@ -86,7 +86,7 @@ if __name__ == "__main__":
     print("--- Verifying multimodal_suite.py Implementations ---")
 
     # Test Case 1: SA1
-    print("\n[Test Case 1] Instantiating and evaluating VC1...")
+    print("\n[Test Case 1] Instantiating and evaluating SA1...")
     try:
         sa1_problem = get_multimodal_problem("SA1")
         print(f"Successfully instantiated: {sa1_problem}")
@@ -113,6 +113,6 @@ if __name__ == "__main__":
         # value for the lower-level objective.
 
     except Exception as e:
-        print(f"An error occurred during VC1 test: {e}")
+        print(f"An error occurred during SA1 test: {e}")
 
     print("\n--- Verification Complete ---")

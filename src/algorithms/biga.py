@@ -19,8 +19,8 @@ class BiGA(BaseOptimizer):
     UPDATED: Corrected function signatures and logic for co-evolution.
     """
 
-    def __init__(self, problem, config, experiment_name):
-        super().__init__(problem, config, experiment_name)
+    def __init__(self, problem, config):
+        super().__init__(problem, config)
         self.ul_pop_size = self.config.get("ul_pop_size", 50)
         self.ll_pop_size = self.config.get("ll_pop_size", 50)
         self.generations = self.config.get("generations", 100)

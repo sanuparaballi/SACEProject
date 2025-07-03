@@ -45,7 +45,7 @@
       "name": "BiGA_Lazy",
       "params": { 
         "ul_pop_size": 50, 
-        "ll_pop_size": 50, 
+        "ll_pop_size": 30, 
         "generations": 50, 
         "ll_refinement_gens": 5 
       }
@@ -54,7 +54,7 @@
       "name": "BiGA_Aggressive",
       "params": { 
         "ul_pop_size": 50, 
-        "ll_pop_size": 50, 
+        "ll_pop_size": 30, 
         "generations": 50, 
         "ll_refinement_gens": 1 
       }

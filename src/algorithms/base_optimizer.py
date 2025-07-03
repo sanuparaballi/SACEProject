@@ -12,7 +12,7 @@ Created on Tue Jun 10 11:44:24 2025
 from abc import ABC, abstractmethod
 
 # Import the new history logger
-from ..utils.history_logger import HistoryLogger
+from SACEProject.src.utils.history_logger import HistoryLogger
 
 
 class BaseOptimizer(ABC):
