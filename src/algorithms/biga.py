@@ -152,6 +152,10 @@ class BiGA(BaseOptimizer):
             best_fitness_overall = fitness_ul[best_ul_idx]
 
             self.log_generation(gen, best_fitness_overall, np.mean(fitness_ul))
+            if gen % 10 == 0:
+                print(
+                    f"Gen {gen}: Best UL Fitness = {best_fitness_overall:.4f}, Avg NFE (UL/LL) = {self.ul_nfe}/{self.ll_nfe}"
+                )
 
         self._commit_history(self.config.get("run_id", 0))
 
