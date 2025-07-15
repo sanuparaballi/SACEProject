@@ -28,13 +28,9 @@ def calculate_l2_error(row, best_known_sol):
         if not ul_sol_str or not ll_sol_str:
             return np.nan
 
-        ul_sol = np.fromstring(ul_sol_str, sep=",")
-        ll_sol = np.fromstring(ll_sol_str, sep=",")
-
-        # A simple heuristic to handle potential parsing issues with nested brackets
-        if len(ul_sol) > best_known_sol.shape[0] or len(ll_sol) > best_known_sol.shape[0]:
-            ul_sol = np.fromstring(ul_sol_str.split("]")[0].strip("[ "), sep=",")
-            ll_sol = np.fromstring(ll_sol_str.split("]")[0].strip("[ "), sep=",")
+        # Use a robust way to parse potentially malformed strings from the CSV
+        ul_sol = np.fromstring(ul_sol_str.split("]")[0].strip("[ "), sep=",")
+        ll_sol = np.fromstring(ll_sol_str.split("]")[0].strip("[ "), sep=",")
 
         solution_vec = np.concatenate([ul_sol, ll_sol])
 
@@ -107,15 +103,14 @@ def analyze_results(results_dir, reference_algo="SACE_ES", l2_baseline_algo="Nes
             print(f"\n** Wilcoxon Rank-Sum Test (vs. {reference_algo}) **")
             print("p < 0.05 indicates a statistically significant difference.")
 
-            ref_results_df = problem_df_copy[problem_df_copy["algorithm_name"] == reference_algo]
+            ref_results_df = problem_df_copy[problem_df_copy["algorithm_name"] == reference_algo].copy()
 
             for algo in algorithms:
                 if algo == reference_algo:
                     continue
 
-                comp_results_df = problem_df_copy[problem_df_copy["algorithm_name"] == algo]
+                comp_results_df = problem_df_copy[problem_df_copy["algorithm_name"] == algo].copy()
 
-                # Align data based on run_id for a true paired test
                 aligned_df = pd.merge(
                     ref_results_df[["run_id", "final_ul_fitness"]],
                     comp_results_df[["run_id", "final_ul_fitness"]],
@@ -127,7 +122,6 @@ def analyze_results(results_dir, reference_algo="SACE_ES", l2_baseline_algo="Nes
                     print(f"  - Cannot compare with {algo}: not enough paired successful runs.")
                     continue
 
-                # UPDATED: Convert pandas Series to NumPy arrays before passing to wilcoxon
                 ref_values = aligned_df["final_ul_fitness_ref"].to_numpy()
                 comp_values = aligned_df["final_ul_fitness_comp"].to_numpy()
 
