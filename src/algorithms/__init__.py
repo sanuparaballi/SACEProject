@@ -15,6 +15,8 @@ from .nested_de import NestedDE
 from .biga import BiGA
 from .sace_es import SACE_ES
 from .kkt_solver import KKTSolver
+from .bboa_kkt import BBOA_KKT
+from .gbsa import GBSA
 
 # For testing the factory, we need a mock problem.
 from ..problems import get_problem
@@ -48,6 +50,8 @@ def get_algorithm(name: str, problem, config: dict) -> BaseOptimizer:
         "biga_aggressive": BiGA,
         "sace_es": SACE_ES,
         "kktsolver": KKTSolver,
+        "bboa_kkt": BBOA_KKT,
+        "gbsa": GBSA,
     }
 
     # Handle BiGA variants by checking the name string
