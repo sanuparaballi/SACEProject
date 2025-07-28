@@ -1,7 +1,7 @@
 {
   "experiment_name": "Experiment1_SMD_Suite_Comparison_Final",
   "settings": {
-    "independent_runs": 1,
+    "independent_runs": 10,
     "seed": 2025
   },
   "problems": [

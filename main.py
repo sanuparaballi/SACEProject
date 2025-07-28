@@ -58,7 +58,8 @@ def main(config_path):
             num_runs = settings.get("independent_runs", 30)
             base_seed = settings.get("seed", int(time.time()))
 
-            for i in tqdm(range(num_runs), desc=f"  Runs for {current_combination_name}", leave=False):
+            for i in tqdm(range(num_runs), desc=f" - Runs for {current_combination_name}", leave=False):
+                print(f" - Run number {i} / {num_runs}.")
                 run_id = i + 1
                 unbounded_seed = base_seed + run_id + abs(hash(current_combination_name))
                 current_seed = unbounded_seed % (2**32)
