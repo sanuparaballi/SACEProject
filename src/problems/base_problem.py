@@ -29,6 +29,10 @@ class BaseBilevelProblem(ABC):
         self.num_ul_constraints = 0
         self.num_ll_constraints = 0
 
+        # Adding optimas to output for comparison in result sheet.
+        self.ul_optimum = None
+        self.ll_optimum = None
+
     @abstractmethod
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         """

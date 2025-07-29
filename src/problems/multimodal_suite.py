@@ -30,8 +30,9 @@ class SA1(BaseBilevelProblem):
         """
         ul_dim = 2
         ll_dim = 2
-        ul_bounds = (-5, 5)
-        ll_bounds = (-10, 10)
+        # Define bounds as a 2D array: [[min, max], [min, max], ...]
+        ul_bounds = np.array([[-5, 5]] * ul_dim)
+        ll_bounds = np.array([[-10, 10]] * ll_dim)
         super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "SA1")
         self.beta = 0.1  # Coupling parameter
 

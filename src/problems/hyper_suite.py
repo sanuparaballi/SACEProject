@@ -46,8 +46,9 @@ class HyperRepresentation(BaseBilevelProblem):
 
         ul_dim = d1
         ll_dim = d2
-        ul_bounds = (-1, 1)  # Bounds for elements of matrix A
-        ll_bounds = (-5, 5)  # Bounds for elements of vector w
+        # Define bounds as a 2D array: [[min, max], [min, max], ...]
+        ul_bounds = np.array([[-1, 1]] * ul_dim)  # Bounds for elements of matrix A
+        ll_bounds = np.array([[-5, 5]] * ll_dim)  # Bounds for elements of vector w
         super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "HyperRep")
 
         # Generate synthetic data as per the paper's methodology

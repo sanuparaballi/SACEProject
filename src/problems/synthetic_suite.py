@@ -32,8 +32,9 @@ class SP1(BaseBilevelProblem):
         """
         ul_dim = n_dim
         ll_dim = n_dim
-        ul_bounds = (-5.12, 5.12)
-        ll_bounds = (-5.12, 5.12)
+        # Define bounds as a 2D array: [[min, max], [min, max], ...]
+        ul_bounds = np.array([[-5.12, 5.12]] * ul_dim)
+        ll_bounds = np.array([[-5.12, 5.12]] * ll_dim)
         super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "SP1")
         self.n_dim = n_dim
 

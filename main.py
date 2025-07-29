@@ -85,6 +85,8 @@ def main(config_path):
 
                     final_results["problem_name"] = problem_config["name"]
                     final_results["algorithm_name"] = algorithm_config["name"]
+                    final_results["ul_true_optimum"] = problem.ul_optimum
+                    final_results["ll_true_optimum"] = problem.ll_optimum
                     logger.log_run(run_id, final_results)
                     print(final_results)
 

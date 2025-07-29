@@ -31,6 +31,9 @@ class BilevelProblem(BaseBilevelProblem):
         ul_dim = p + r
         ll_dim = q + s + r
         super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, name)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def _split_vars(self, ul_vars, ll_vars):
         x_u1 = ul_vars[: self.p]
@@ -45,6 +48,9 @@ class SMD1(BilevelProblem):
         ul_b = [[-5, 10]] * (p + r)
         ll_b = [[-5, 10]] * q + [[-1.57, 1.57]] * r
         super().__init__(p, q, r, s, "SMD1", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -65,6 +71,9 @@ class SMD2(BilevelProblem):
         ul_b = [[-5, 10]] * p + [[-5, 1]] * r
         ll_b = [[-5, 10]] * q + [[1e-6, np.e]] * r
         super().__init__(p, q, r, s, "SMD2", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -85,6 +94,9 @@ class SMD3(BilevelProblem):
         ul_b = [[-5, 10]] * (p + r)
         ll_b = [[-5, 10]] * q + [[-1.57, 1.57]] * r
         super().__init__(p, q, r, s, "SMD3", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -105,6 +117,9 @@ class SMD4(BilevelProblem):
         ul_b = [[-5, 10]] * p + [[-1, 1]] * r
         ll_b = [[-5, 10]] * q + [[0, np.e]] * r
         super().__init__(p, q, r, s, "SMD4", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -125,6 +140,9 @@ class SMD5(BilevelProblem):
         ul_b = [[-5, 10]] * (p + r)
         ll_b = [[-5, 10]] * (q + r)
         super().__init__(p, q, r, s, "SMD5", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
         if q < 2:
             raise ValueError("SMD5 requires q >= 2 for Rosenbrock.")
 
@@ -150,6 +168,9 @@ class SMD6(BilevelProblem):
         ul_b = [[-5, 10]] * (p + r)
         ll_b = [[-5, 10]] * (q + s + r)
         super().__init__(p, q, r, s, "SMD6", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
         if s < 2 or s % 2 != 0:
             raise ValueError("SMD6 requires s to be an even number >= 2.")
 
@@ -184,6 +205,9 @@ class SMD7(BilevelProblem):
         ul_b = [[-5, 10]] * p + [[-5, 1]] * r
         ll_b = [[-5, 10]] * q + [[1e-6, np.e]] * r
         super().__init__(p, q, r, s, "SMD7", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -206,6 +230,9 @@ class SMD8(BilevelProblem):
         ul_b = [[-5, 10]] * (p + r)
         ll_b = [[-5, 10]] * (q + r)
         super().__init__(p, q, r, s, "SMD8", ul_b, ll_b)
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
         if q < 2:
             raise ValueError("SMD8 requires q >= 2 for Rosenbrock.")
 
@@ -238,6 +265,9 @@ class SMD9(BilevelProblem):
         self.num_ll_constraints = 1
         self.a = 1.0
         self.b = 1.0
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -270,6 +300,9 @@ class SMD10(BilevelProblem):
         super().__init__(p, q, r, s, "SMD10", ul_b, ll_b)
         self.num_ul_constraints = p + r
         self.num_ll_constraints = q
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = 0.0
+        self.ll_optimum = 0.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -308,6 +341,9 @@ class SMD11(BilevelProblem):
         super().__init__(p, q, r, s, "SMD11", ul_b, ll_b)
         self.num_ul_constraints = r
         self.num_ll_constraints = 1
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = -1.0
+        self.ll_optimum = 1.0
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
@@ -339,6 +375,9 @@ class SMD12(BilevelProblem):
         super().__init__(p, q, r, s, "SMD12", ul_b, ll_b)
         self.num_ul_constraints = p + 2 * r
         self.num_ll_constraints = q + 1
+        # --- SETTING TRUE OPTIMA ---
+        self.ul_optimum = "NaN"
+        self.ll_optimum = "NaN"
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
         x_u1, x_u2, x_l1, x_l2 = self._split_vars(ul_vars, ll_vars)
