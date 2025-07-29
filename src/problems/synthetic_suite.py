@@ -56,7 +56,7 @@ class SP1(BaseBilevelProblem):
         return ul_objective, ll_objective
 
 
-class SP2(BilevelProblem):
+class SP2(BaseBilevelProblem):
     """
     Implements the Synthetic Problem 2 (SP2).
 
