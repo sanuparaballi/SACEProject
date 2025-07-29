@@ -39,6 +39,7 @@ class BaseOptimizer(ABC):
 
         UPDATED: Added experiment_name for the logger.
         """
+
         self.problem = problem
         self.config = config
         self.history = []  # A list to store convergence data for each generation

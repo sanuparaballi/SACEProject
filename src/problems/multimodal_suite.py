@@ -32,7 +32,7 @@ class SA1(BilevelProblem):
         ll_dim = 2
         ul_bounds = (-5, 5)
         ll_bounds = (-10, 10)
-        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds)
+        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "SA1")
         self.beta = 0.1  # Coupling parameter
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):

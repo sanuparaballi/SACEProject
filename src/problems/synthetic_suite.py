@@ -34,7 +34,7 @@ class SP1(BilevelProblem):
         ll_dim = n_dim
         ul_bounds = (-5.12, 5.12)
         ll_bounds = (-5.12, 5.12)
-        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds)
+        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "SP1")
         self.n_dim = n_dim
 
     def evaluate(self, ul_vars, ll_vars, add_penalty=True):
@@ -74,7 +74,7 @@ class SP2(BilevelProblem):
         ll_dim = n_dim
         ul_bounds = (0.5, 1.5)  # Represents pricing factors or priorities
         ll_bounds = (0, 10)  # Represents integer quantities of items
-        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds)
+        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "SP2")
         self.n_dim = n_dim
 
         # Pre-defined weights and values for the items (for reproducibility)

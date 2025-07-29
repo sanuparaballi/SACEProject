@@ -48,10 +48,14 @@ class BBOA_KKT(BaseOptimizer):
     def solve(self):
         # Initialize a random population of (ul_vars, ll_vars)
         ul_pop = np.random.uniform(
-            self.problem.ul_bounds[0], self.problem.ul_bounds[1], size=(self.pop_size, self.problem.ul_dim)
+            self.problem.ul_bounds[:, 0],
+            self.problem.ul_bounds[:, 1],
+            size=(self.pop_size, self.problem.ul_dim),
         )
         ll_pop = np.random.uniform(
-            self.problem.ll_bounds[0], self.problem.ll_bounds[1], size=(self.pop_size, self.problem.ll_dim)
+            self.problem.ll_bounds[:, 0],
+            self.problem.ll_bounds[:, 1],
+            size=(self.pop_size, self.problem.ll_dim),
         )
         pop = np.hstack([ul_pop, ll_pop])
 
@@ -102,10 +106,14 @@ class BBOA_KKT(BaseOptimizer):
         best_ul_vars = best_solution[: self.problem.ul_dim]
         best_ll_vars = best_solution[self.problem.ul_dim :]
 
+        # FINAL RESULT: Must return the full dictionary
+
         return {
             "final_ul_fitness": self.problem.evaluate(best_ul_vars, best_ll_vars)[0],
             "total_ul_nfe": self.ul_nfe,
             "total_ll_nfe": self.ll_nfe,
+            "best_ul_solution": best_ul_vars,
+            "corresponding_ll_solution": best_ll_vars,
         }
 
 
@@ -199,4 +207,10 @@ class BBOA_KKT(BaseOptimizer):
 #             best_idx = np.argmin(final_kkt_v)
 
 #         best_ul, best_ll = pop[best_idx][:self.problem.ul_dim], pop[best_idx][self.problem.ul_dim:]
-#         return {"final_ul_fitness": final_ul_fit[best_idx], "total_ul_nfe": self.ul_nfe, "total_ll_nfe": self.ll_nfe}
+#         return {
+#     "final_ul_fitness": self.problem.evaluate(best_ul_vars, best_ll_vars)[0],
+#     "total_ul_nfe": self.ul_nfe,
+#     "total_ll_nfe": self.ll_nfe,
+#     "best_ul_solution": best_ul_vars,
+#     "corresponding_ll_solution": best_ll_vars
+# }

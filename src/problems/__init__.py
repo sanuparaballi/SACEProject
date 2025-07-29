@@ -38,7 +38,7 @@ def get_problem(name: str, params: dict):
 
     # Check which suite the problem belongs to
     if name_lower.startswith("smd"):
-        return get_smd_problem(name_lower)
+        return get_smd_problem(name_lower, params)
     elif name_lower.startswith("sp"):
         n_dim = params.get("n_dim", 10)
         return get_synthetic_problem(name_lower, n_dim=n_dim)

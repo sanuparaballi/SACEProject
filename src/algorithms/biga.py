@@ -10,7 +10,7 @@ Created on Tue Jun 10 12:09:36 2025
 
 # import numpy as np
 # from .base_optimizer import BaseOptimizer
-# from ..problems.smd_suite import get_smd_problem
+from ..problems.smd_suite import get_smd_problem
 
 
 # class BiGA(BaseOptimizer):
@@ -186,14 +186,15 @@ class BiGA(BaseOptimizer):
         super().__init__(problem, config)
         self.pop_size = self.config.get("ul_pop_size", 50)
         self.generations = self.config.get("generations", 100)
+        self.ll_generations = self.config.get("ll_generations", 50)
         self.ll_refinement_gens = self.config.get("ll_refinement_gens", 5)
 
     def _run_ll_ga(self, ul_vars, ll_pop_initial=None, generations=25):
         """Runs a standard GA on the lower level."""
         if ll_pop_initial is None:
             ll_pop = np.random.uniform(
-                self.problem.ll_bounds[0],
-                self.problem.ll_bounds[1],
+                self.problem.ll_bounds[:, 0],
+                self.problem.ll_bounds[:, 1],
                 size=(self.pop_size, self.problem.ll_dim),
             )
         else:
@@ -206,7 +207,7 @@ class BiGA(BaseOptimizer):
             # Simplified tournament selection and mutation
             parents = ll_pop[np.random.randint(0, len(ll_pop), size=len(ll_pop))]
             offspring = parents + np.random.normal(0, 0.1, size=ll_pop.shape)
-            offspring = np.clip(offspring, self.problem.ll_bounds[0], self.problem.ll_bounds[1])
+            offspring = np.clip(offspring, self.problem.ll_bounds[:, 0], self.problem.ll_bounds[:, 1])
 
             offspring_fitness = np.array(
                 [self.problem.evaluate(ul_vars, o, add_penalty=True)[1] for o in offspring]
@@ -225,7 +226,9 @@ class BiGA(BaseOptimizer):
     def solve(self):
         # Initial population requires a full LL solve
         ul_pop = np.random.uniform(
-            self.problem.ul_bounds[0], self.problem.ul_bounds[1], size=(self.pop_size, self.problem.ul_dim)
+            self.problem.ul_bounds[:, 0],
+            self.problem.ul_bounds[:, 1],
+            size=(self.pop_size, self.problem.ul_dim),
         )
         ll_pop = np.zeros((self.pop_size, self.problem.ll_dim))
         for i in range(self.pop_size):
@@ -235,14 +238,15 @@ class BiGA(BaseOptimizer):
             # Create UL offspring (simplified)
             parents_ul = ul_pop[np.random.randint(0, self.pop_size, size=self.pop_size)]
             offspring_ul = parents_ul + np.random.normal(0, 0.1, size=ul_pop.shape)
-            offspring_ul = np.clip(offspring_ul, self.problem.ul_bounds[0], self.problem.ul_bounds[1])
+            offspring_ul = np.clip(offspring_ul, self.problem.ul_bounds[:, 0], self.problem.ul_bounds[:, 1])
 
             # Refine LL solutions for the new UL offspring
-            offspring_ll_pop, _ = self._run_ll_ga(offspring_ul, ll_pop, self.ll_refinement_gens)
+            if gen % self.ll_refinement_gens == 0:
+                offspring_ll_pop, _ = self._run_ll_ga(offspring_ul, ll_pop, self.ll_generations)
+                combined_ll = np.vstack([ll_pop, offspring_ll_pop])
 
             # Combine populations and select
             combined_ul = np.vstack([ul_pop, offspring_ul])
-            combined_ll = np.vstack([ll_pop, offspring_ll_pop])
 
             fitness = np.array(
                 [self.problem.evaluate(combined_ul[i], combined_ll[i])[0] for i in range(len(combined_ul))]
@@ -258,6 +262,7 @@ class BiGA(BaseOptimizer):
         best_idx = np.argmin(
             np.array([self.problem.evaluate(ul_pop[i], ll_pop[i])[0] for i in range(self.pop_size)])
         )
+        self.ul_nfe += len(ul_pop)
         return {
             "final_ul_fitness": self.problem.evaluate(ul_pop[best_idx], ll_pop[best_idx])[0],
             "total_ul_nfe": self.ul_nfe,

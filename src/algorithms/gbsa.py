@@ -34,12 +34,12 @@ class GBSA(BaseOptimizer):
     def _full_ll_solve(self, ul_vars):
         """A placeholder for a full LL solve (like in NestedDE) for initialization."""
         ll_vars = np.random.uniform(
-            self.problem.ll_bounds[0], self.problem.ll_bounds[1], size=self.problem.ll_dim
+            self.problem.ll_bounds[:, 0], self.problem.ll_bounds[:, 1], size=self.problem.ll_dim
         )
         for _ in range(50):  # More steps for initial solve
             grad = self.problem.evaluate_ll_gradient(ul_vars, ll_vars)
             ll_vars -= self.ll_step_size * grad
-            ll_vars = np.clip(ll_vars, self.problem.ll_bounds[0], self.problem.ll_bounds[1])
+            ll_vars = np.clip(ll_vars, self.problem.ll_bounds[:, 0], self.problem.ll_bounds[:, 1])
             self.ll_nfe += 1
         return ll_vars
 
@@ -48,14 +48,16 @@ class GBSA(BaseOptimizer):
         for _ in range(self.ll_refinement_steps):
             grad = self.problem.evaluate_ll_gradient(ul_vars, ll_vars)
             ll_vars -= self.ll_step_size * grad
-            ll_vars = np.clip(ll_vars, self.problem.ll_bounds[0], self.problem.ll_bounds[1])
+            ll_vars = np.clip(ll_vars, self.problem.ll_bounds[:, 0], self.problem.ll_bounds[:, 1])
             self.ll_nfe += 1
         return ll_vars
 
     def solve(self):
         # Initialize population
         ul_pop = np.random.uniform(
-            self.problem.ul_bounds[0], self.problem.ul_bounds[1], size=(self.pop_size, self.problem.ul_dim)
+            self.problem.ul_bounds[:, 0],
+            self.problem.ul_bounds[:, 1],
+            size=(self.pop_size, self.problem.ul_dim),
         )
         ll_pop = np.array([self._full_ll_solve(ul_ind) for ul_ind in ul_pop])
         fitness = np.array([self.problem.evaluate(ul_pop[i], ll_pop[i])[0] for i in range(self.pop_size)])
@@ -71,7 +73,7 @@ class GBSA(BaseOptimizer):
 
             # Crossover and Mutation for UL
             offspring_ul = parent_pop_ul + np.random.normal(0, 0.1, size=ul_pop.shape)
-            offspring_ul = np.clip(offspring_ul, self.problem.ul_bounds[0], self.problem.ul_bounds[1])
+            offspring_ul = np.clip(offspring_ul, self.problem.ul_bounds[:, 0], self.problem.ul_bounds[:, 1])
 
             # Approximate LL solutions for offspring
             offspring_ll = np.array(
@@ -88,8 +90,16 @@ class GBSA(BaseOptimizer):
             self.log_generation(gen, np.min(fitness), self.ul_nfe)
 
         best_idx = np.argmin(fitness)
+        # return {
+        #     "final_ul_fitness": fitness[best_idx],
+        #     "total_ul_nfe": self.ul_nfe,
+        #     "total_ll_nfe": self.ll_nfe,
+        # }
+
         return {
             "final_ul_fitness": fitness[best_idx],
             "total_ul_nfe": self.ul_nfe,
             "total_ll_nfe": self.ll_nfe,
+            "best_ul_solution": ul_pop[best_idx],
+            "corresponding_ll_solution": ll_pop[best_idx],
         }

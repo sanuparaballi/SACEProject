@@ -48,7 +48,7 @@ class HyperRepresentation(BilevelProblem):
         ll_dim = d2
         ul_bounds = (-1, 1)  # Bounds for elements of matrix A
         ll_bounds = (-5, 5)  # Bounds for elements of vector w
-        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds)
+        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, "HyperRep")
 
         # Generate synthetic data as per the paper's methodology
         np.random.seed(42)

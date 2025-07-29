@@ -1,18 +1,22 @@
 {
-  "experiment_name": "Experiment1_SMD_Suite_Comparison_Final",
+  "experiment_name": "Full_Benchmark_V1.0",
   "settings": {
-    "independent_runs": 10,
+    "independent_runs": 1,
     "seed": 2025
   },
   "problems": [
-    { "name": "SMD1", "params": {} },
-    { "name": "SMD2", "params": {} },
-    { "name": "SMD3", "params": {} },
-    { "name": "SMD4", "params": {} },
-    { "name": "SMD5", "params": {} },
-    { "name": "SMD6", "params": {} },
-    { "name": "SMD7", "params": {} },
-    { "name": "SMD8", "params": {} },
+    { "name": "SMD1", "params": { "p": 2, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD2", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD3", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD4", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD5", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD6", "params": { "p": 1, "q": 0, "r": 1, "s": 2 } },
+    { "name": "SMD7", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD8", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD9", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD10", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD11", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
+    { "name": "SMD12", "params": { "p": 1, "q": 2, "r": 1, "s": 0 } },
     { "name": "SP1", "params": { "n_dim": 10 } },
     { "name": "SP1", "params": { "n_dim": 30 } },
     { "name": "SP2", "params": { "n_dim": 10 } },
@@ -21,48 +25,57 @@
   ],
   "algorithms": [
     {
-      "name": "SACE_ES",
+      "name": "SACE_ES_Independent",
       "params": { 
-        "ul_pop_size": 50, 
-        "ll_pop_size": 30, 
-        "generations": 50, 
-        "initial_samples": 50, 
-        "ll_generations": 25 
+        "surrogate_config": {"strategy": "independent"},
+        "ul_mu": 15, "ul_lambda": 30, "generations": 50, "initial_samples": 20
+      }
+    },
+    {
+      "name": "SACE_ES_MOGP",
+      "params": { 
+        "surrogate_config": {"strategy": "mogp"},
+        "ul_mu": 15, "ul_lambda": 30, "generations": 50, "initial_samples": 20
+      }
+    },
+    {
+      "name": "SACE_ES_Heteroscedastic",
+      "params": { 
+        "surrogate_config": {"strategy": "heteroscedastic"},
+        "ul_mu": 15, "ul_lambda": 30, "generations": 50, "initial_samples": 20
       }
     },
     {
       "name": "NestedDE",
       "params": { 
-        "ul_pop_size": 50, 
-        "ll_pop_size": 30, 
-        "generations": 50, 
-        "ll_generations": 25, 
-        "F": 0.5, 
-        "Cr": 0.9 
+        "ul_pop_size": 50, "ll_pop_size": 30, "generations": 50, 
+        "ll_generations": 25, "F": 0.5, "Cr": 0.9 
       }
     },
     {
       "name": "BiGA_Lazy",
       "params": { 
-        "ul_pop_size": 50, 
-        "ll_pop_size": 30, 
-        "generations": 50, 
-        "ll_refinement_gens": 5 
+        "ul_pop_size": 50, "generations": 50, "ll_generations":25, "ll_refinement_gens": 5
       }
     },
     {
       "name": "BiGA_Aggressive",
       "params": { 
-        "ul_pop_size": 50, 
-        "ll_pop_size": 30, 
-        "generations": 50, 
-        "ll_refinement_gens": 1 
+        "ul_pop_size": 50, "generations": 50, "ll_generations":25, "ll_refinement_gens": 1
       }
     },
     {
-      "name": "KKTSolver",
-      "params": { "max_iter": 1000 }
+      "name": "BBOA_KKT",
+      "params": {
+        "pop_size": 100, "generations": 50
+      }
+    },
+    {
+      "name": "GBSA",
+      "params": {
+        "pop_size": 50, "generations": 50, 
+        "ll_refinement_steps": 5, "ll_step_size": 0.05
+      }
     }
   ]
 }
-

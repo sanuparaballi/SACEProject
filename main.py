@@ -11,6 +11,7 @@ Created on Tue Jun 10 11:50:44 2025
 
 import json
 import time
+import warnings
 import numpy as np
 from tqdm import tqdm
 import traceback
@@ -18,6 +19,8 @@ import traceback
 from src.problems import get_problem
 from src.algorithms import get_algorithm
 from src.utils.data_logger import DataLogger
+
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.gaussian_process")
 
 
 def main(config_path):
@@ -83,6 +86,7 @@ def main(config_path):
                     final_results["problem_name"] = problem_config["name"]
                     final_results["algorithm_name"] = algorithm_config["name"]
                     logger.log_run(run_id, final_results)
+                    print(final_results)
 
                 except Exception as e:
                     print(f"\n--- ERROR during run {run_id} of {current_combination_name} ---")

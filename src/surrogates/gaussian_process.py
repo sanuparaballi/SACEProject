@@ -35,7 +35,7 @@ class GaussianProcessSurrogate:
             # Default kernel: Radial Basis Function (RBF) for smoothness.
             # The length_scale parameter determines the 'reach' of the influence
             # of each training point.
-            self.kernel = C(1.0, (1e-3, 1e3)) * RBF(1.0, (1e-2, 1e2))
+            self.kernel = C(1.0, (1e-3, 1e3)) * RBF(1.0, (1e-5, 1e3))
         else:
             self.kernel = kernel
 

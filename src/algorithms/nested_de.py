@@ -175,8 +175,8 @@ class NestedDE(BaseOptimizer):
     def _run_ll_de(self, ul_vars):
         """Runs a full DE optimization on the lower level."""
         pop = np.random.uniform(
-            self.problem.ll_bounds[0],
-            self.problem.ll_bounds[1],
+            self.problem.ll_bounds[:, 0],
+            self.problem.ll_bounds[:, 1],
             size=(self.ll_pop_size, self.problem.ll_dim),
         )
 
@@ -190,7 +190,7 @@ class NestedDE(BaseOptimizer):
 
                 # Mutation
                 mutant = a + self.F * (b - c)
-                mutant = np.clip(mutant, self.problem.ll_bounds[0], self.problem.ll_bounds[1])
+                mutant = np.clip(mutant, self.problem.ll_bounds[:, 0], self.problem.ll_bounds[:, 1])
 
                 # Crossover
                 cross_points = np.random.rand(self.problem.ll_dim) <= self.Cr
@@ -209,8 +209,8 @@ class NestedDE(BaseOptimizer):
     def solve(self):
         # Initialize UL population
         ul_pop = np.random.uniform(
-            self.problem.ul_bounds[0],
-            self.problem.ul_bounds[1],
+            self.problem.ul_bounds[:, 0],
+            self.problem.ul_bounds[:, 1],
             size=(self.ul_pop_size, self.problem.ul_dim),
         )
 
@@ -225,7 +225,7 @@ class NestedDE(BaseOptimizer):
                 a, b, c = ul_pop[np.random.choice(idxs, 3, replace=False)]
 
                 mutant = a + self.F * (b - c)
-                mutant = np.clip(mutant, self.problem.ul_bounds[0], self.problem.ul_bounds[1])
+                mutant = np.clip(mutant, self.problem.ul_bounds[:, 0], self.problem.ul_bounds[:, 1])
 
                 cross_points = np.random.rand(self.problem.ul_dim) <= self.Cr
                 trial_ul = np.where(cross_points, mutant, ul_pop[i])
