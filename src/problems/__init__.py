@@ -10,10 +10,11 @@ Created on Tue Jun 10 12:30:32 2025
 # sace_project/src/problems/__init__.py
 
 # Import the specific factory functions from each suite file
-from .smd_suite import get_smd_problem, SMD1
-from .synthetic_suite import get_synthetic_problem, SP1
-from .multimodal_suite import get_multimodal_problem, SA1
-from .hyper_suite import get_hyper_problem, HyperRepresentation  # UPDATED: Import the new suite
+# Import all problem definition functions/classes
+from .smd_suite import SMD1, SMD2, SMD3, SMD4, SMD5, SMD6, SMD7, SMD8, SMD9, SMD10, SMD11, SMD12
+from .synthetic_suite import SP1, SP2
+from .multimodal_suite import SA1
+from .hyper_suite import HyperRepresentation
 
 
 def get_problem(name: str, params: dict):
@@ -22,34 +23,39 @@ def get_problem(name: str, params: dict):
 
     This function delegates the creation of the problem to the appropriate
     suite-specific factory function based on the problem name.
-
-    Args:
-        name (str): The name of the problem (e.g., "SMD1", "SP1", "SA1").
-        params (dict): A dictionary of parameters for the problem, such as
-                       'n_dim' for scalable problems.
-
-    Returns:
-        An initialized instance of a BilevelProblem subclass.
-
-    Raises:
-        ValueError: If the specified problem name is not found in any suite.
+    Factory function to get a problem instance by its name.
+    UPDATED: Now includes all new problem suites.
     """
-    name_lower = name.lower()
+    problem_map = {
+        # SMD Suite
+        "smd1": SMD1,
+        "smd2": SMD2,
+        "smd3": SMD3,
+        "smd4": SMD4,
+        "smd5": SMD5,
+        "smd6": SMD6,
+        "smd7": SMD7,
+        "smd8": SMD8,
+        "smd9": SMD9,
+        "smd10": SMD10,
+        "smd11": SMD11,
+        "smd12": SMD12,
+        # Synthetic Suite
+        "sp1": SP1,
+        "sp2": SP2,
+        # Multimodal Suite
+        "sa1": SA1,
+        # Hyper-representation Suite
+        "hyper_representation": HyperRepresentation,
+    }
 
-    # Check which suite the problem belongs to
-    if name_lower.startswith("smd"):
-        return get_smd_problem(name_lower, params)
-    elif name_lower.startswith("sp"):
-        n_dim = params.get("n_dim", 10)
-        return get_synthetic_problem(name_lower, n_dim=n_dim)
-    elif name_lower.startswith("sa"):
-        return get_multimodal_problem(name_lower)
-    # UPDATED: Add logic to handle the new Hyper-representation problem
-    elif name_lower.startswith("hyper"):
-        return get_hyper_problem(name_lower, params)
-    else:
-        # If the problem does not match any known prefix, raise an error.
-        raise ValueError(f"Problem '{name}' not recognized or suite not supported.")
+    problem_class = problem_map.get(name.lower())
+
+    if not problem_class:
+        raise ValueError(f"Problem '{name}' not found in the factory. Available: {list(problem_map.keys())}")
+
+    # Instantiate the class with its specific parameters from the JSON file
+    return problem_class(**params)
 
 
 # =============================================================================

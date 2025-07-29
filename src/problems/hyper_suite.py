@@ -10,10 +10,10 @@ Created on Wed Jun 11 21:57:42 2025
 # sace_project/src/problems/hyper_suite.py
 
 import numpy as np
-from .smd_suite import BilevelProblem
+from .base_problem import BaseBilevelProblem
 
 
-class HyperRepresentation(BilevelProblem):
+class HyperRepresentation(BaseBilevelProblem):
     """
     Implements the Hyper-representation problem as described in the paper.
     https://openreview.net/pdf?id=W4AZQzNe8h

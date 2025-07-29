@@ -11,10 +11,10 @@ Created on Tue Jun 10 12:00:31 2025
 import numpy as np
 
 # We import the base class from our existing smd_suite file to ensure consistency.
-from .smd_suite import BilevelProblem
+from .base_problem import BaseBilevelProblem
 
 
-class SP1(BilevelProblem):
+class SP1(BaseBilevelProblem):
     """
     Implements the Synthetic Problem 1 (SP1).
 

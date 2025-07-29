@@ -12,28 +12,25 @@ Created on Tue Jun 10 11:52:47 2025
 
 import numpy as np
 
+from .base_problem import BaseBilevelProblem
 
-class BilevelProblem:
+
+class BilevelProblem(BaseBilevelProblem):
     """
     Base class for the Sinha, Malo, Deb (SMD) bilevel optimization problem suite.
     This implementation is fully updated to be compatible with all algorithms.
     - Constructor now sets ul_bounds and ll_bounds.
     - evaluate() now accepts an 'add_penalty' flag.
     - Added evaluate_ll_gradient() method.
+
+    This class handles the SMD-specific p, q, r, s parameterization.
     """
 
     def __init__(self, p, q, r, s, name, ul_bounds, ll_bounds):
-        self.p = p
-        self.q = q
-        self.r = r
-        self.s = s
-        self.name = name
-        self.ul_dim = p + r
-        self.ll_dim = q + s + r
-        self.ul_bounds = np.array(ul_bounds)
-        self.ll_bounds = np.array(ll_bounds)
-        self.num_ul_constraints = 0
-        self.num_ll_constraints = 0
+        self.p, self.q, self.r, self.s = p, q, r, s
+        ul_dim = p + r
+        ll_dim = q + s + r
+        super().__init__(ul_dim, ll_dim, ul_bounds, ll_bounds, name)
 
     def _split_vars(self, ul_vars, ll_vars):
         x_u1 = ul_vars[: self.p]
@@ -41,21 +38,6 @@ class BilevelProblem:
         x_l1 = ll_vars[: self.q + self.s]
         x_l2 = ll_vars[self.q + self.s :]
         return x_u1, x_u2, x_l1, x_l2
-
-    def evaluate(self, ul_vars, ll_vars, add_penalty=True):
-        raise NotImplementedError("evaluate must be implemented.")
-
-    def evaluate_ll_gradient(self, ul_vars, ll_vars):
-        raise NotImplementedError(f"LL gradient not implemented for {self.name}.")
-
-    def evaluate_ul_constraints(self, ul_vars, ll_vars):
-        return np.array([])
-
-    def evaluate_ll_constraints(self, ul_vars, ll_vars):
-        return np.array([])
-
-    def __repr__(self):
-        return f"{self.name}(UL={self.ul_dim}, LL={self.ll_dim})"
 
 
 class SMD1(BilevelProblem):

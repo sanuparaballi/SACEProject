@@ -10,10 +10,10 @@ Created on Tue Jun 10 12:01:56 2025
 
 
 import numpy as np
-from .smd_suite import BilevelProblem
+from .base_problem import BaseBilevelProblem
 
 
-class SA1(BilevelProblem):
+class SA1(BaseBilevelProblem):
     """
     Implements the Sanup Araballi 1 (SA1) test problem.
 
