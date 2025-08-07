@@ -25,6 +25,27 @@
   ],
   "algorithms": [
     {
+      "name": "SACE_PSO",
+      "params": {
+        "surrogate_config": {"strategy": "independent"},
+        "ul_pop_size": 50, "generations": 50, "initial_samples": 20
+      }
+    },
+    {
+      "name": "SACE_PSO",
+      "params": {
+        "surrogate_config": {"strategy": "mogp"},
+        "ul_pop_size": 50, "generations": 50, "initial_samples": 20
+      }
+    },
+    {
+      "name": "SACE_PSO",
+      "params": {
+        "surrogate_config": {"strategy": "heteroscedastic"},
+        "ul_pop_size": 50, "generations": 50, "initial_samples": 20
+      }
+    },
+    {
       "name": "SACE_ES_Independent",
       "params": { 
         "surrogate_config": {"strategy": "independent"},

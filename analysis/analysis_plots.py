@@ -7,13 +7,14 @@ Created on Tue Jul 29 17:09:01 2025
 """
 
 import pandas as pd
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load the results csv file
 try:
-    df = pd.read_csv("Full_Benchmark_V1.0_20250729-150246.csv")
+    df = pd.read_csv("./../results/csv/Phase 2 - 10 Run Results.csv")
 
     # Data Cleaning: Convert error strings to NaN and numeric columns to numbers
     numeric_cols = ["final_ul_fitness", "total_ul_nfe", "total_ll_nfe"]
@@ -115,6 +116,6 @@ try:
 
 
 except FileNotFoundError:
-    print("Error: The results file 'Full_Benchmark_V1.0_20250729-150246.csv' was not found.")
+    print("Error: The results file was not found.")
 except Exception as e:
     print(f"An error occurred during analysis: {e}")

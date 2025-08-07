@@ -14,6 +14,7 @@ from .base_optimizer import BaseOptimizer
 from .nested_de import NestedDE
 from .biga import BiGA
 from .sace_es import SACE_ES
+from .sace_pso import SACE_PSO
 from .kkt_solver import KKTSolver
 from .bboa_kkt import BBOA_KKT
 from .gbsa import GBSA
@@ -54,6 +55,7 @@ def get_algorithm(name: str, problem, config: dict) -> BaseOptimizer:
         "kktsolver": KKTSolver,
         "bboa_kkt": BBOA_KKT,
         "gbsa": GBSA,
+        "sace_pso": SACE_PSO,
     }
 
     # Handle BiGA variants by checking the name string
